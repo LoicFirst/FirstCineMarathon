@@ -1,0 +1,1899 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Marathon Cinéphile — Final (corrigé)</title>
+<style>
+:root{
+  --bg-top:#0f1720;
+  --bg-bottom:#081016;
+  --card:#151b24;
+  --muted:#9aa6b2;
+  --accent:#4ea8ff;
+  --accent-2:#6bd3ff;
+  --danger:#ff6b6b;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  color:#e6eef3;
+  background:linear-gradient(180deg,var(--bg-top), var(--bg-bottom));
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  padding:14px;
+}
+.container{max-width:1100px;margin:0 auto;position:relative}
+header{display:flex;align-items:center;gap:12px;padding:10px 0}
+.logo{font-weight:700;font-size:18px;color:var(--accent)}
+.tabs{display:flex;gap:8px;margin-left:14px}
+.tab-btn{background:transparent;border:0;color:#9fb0c4;padding:8px 12px;border-radius:8px;cursor:pointer;transition:all .16s}
+.tab-btn.active{color:#012;background:linear-gradient(90deg,var(--accent),var(--accent-2));font-weight:700;transform:translateY(-1px)}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* Floating counter (advanced) */
+.floating-counter{position:fixed; right:18px; top:18px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)); padding:8px 12px; border-radius:10px; backdrop-filter: blur(6px); box-shadow: 0 8px 20px rgba(0,0,0,0.6); display:flex; align-items:center; gap:10px; z-index:9999; color:#fff; font-weight:700; cursor:pointer}
+.floating-counter .small{font-weight:500;color:rgba(230,238,243,0.9);font-size:13px}
+.floating-counter button{background:var(--accent); color:#012; border:0; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:0 6px 18px rgba(0,0,0,0.45)}
+.floating-counter button:hover{transform:translateY(-2px)}
+
+/* Pulse animation when counter changes (soft) */
+.counter-pulse {
+  animation: counterPulse 0.28s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes counterPulse {
+  0%   { transform: scale(1); box-shadow:0 6px 18px rgba(0,0,0,0.45);}
+  40%  { transform: scale(1.10); box-shadow:0 18px 40px rgba(0,0,0,0.55);}
+  100% { transform: scale(1); box-shadow:0 8px 20px rgba(0,0,0,0.5);}
+}
+
+/* Content */
+.content{background:var(--card);border-radius:12px;padding:16px;margin-top:12px;box-shadow:0 10px 34px rgba(0,0,0,0.5)}
+.section{margin:14px 0;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));border-left:6px solid rgba(255,255,255,0.02);transition:box-shadow .18s, transform .16s}
+.section:hover{box-shadow:0 12px 30px rgba(0,0,0,0.55); transform:translateY(-2px)}
+.section-head{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.section-info{display:flex;align-items:center;gap:12px}
+.section-title{font-size:18px;font-weight:700}
+.section-meta{color:var(--muted);font-size:13px}
+
+/* Film row: very small gap to remove space between num and checkbox */
+.film{display:flex;align-items:center;gap:6px;padding:8px;border-radius:8px;transition:background .12s, transform .12s}
+.film:hover{background:rgba(255,255,255,0.01)}
+.film img{width:64px;border-radius:6px;flex-shrink:0}
+.poster-mid{width:110px}
+.num{min-width:36px;text-align:right;font-weight:800;color:#ffd;margin-right:0}
+.title{font-weight:700}
+.meta{font-size:13px;color:var(--muted)}
+.actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+/* Buttons */
+.button{background:var(--accent);color:#022;padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700;transition:transform .12s, box-shadow .12s}
+.button:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(0,0,0,0.5)}
+.action-btn{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;cursor:pointer}
+.action-btn:hover{background:rgba(255,255,255,0.02)}
+.action-delete{background:linear-gradient(180deg,var(--danger),#ff5252);color:#fff;border:0;padding:6px 10px;border-radius:8px;cursor:pointer}
+
+/* Inputs & Selects - DARK everywhere to avoid white dropdowns */
+input[type=text], select, input[type=date], input{padding:8px;border-radius:8px;border:1px solid #445;background:rgba(0,0,0,0.35);color:#eef6ff;min-width:120px}
+input::placeholder{color:rgba(230,238,243,0.45)}
+select option{ background: #08101a; color: #eef6ff; }
+
+/* Inline form */
+.inline-form{display:flex;gap:8px;align-items:center;margin-top:8px}
+.inline-form input{padding:6px;border-radius:6px;background:#0b1116;color:#eef6ff}
+
+/* Wiki link */
+.wiki-link{ color:var(--accent-2); background:rgba(255,255,255,0.02); padding:5px 8px; border-radius:6px; text-decoration:none; display:inline-block; }
+
+/* Carousel */
+.carousel-wrap{position:relative;overflow:hidden;border-radius:10px;margin-top:12px;height:200px}
+.carousel-bg{position:absolute;inset:0;filter:blur(16px) saturate(80%);opacity:0.12;background-size:cover;background-position:center;z-index:0}
+.carousel-viewport{position:relative;z-index:2;height:100%;overflow:hidden}
+.carousel-track{display:flex;gap:12px;align-items:center;height:100%;padding:12px;will-change:transform}
+.carousel-track img{height:160px;border-radius:8px;flex-shrink:0;box-shadow:0 8px 20px rgba(0,0,0,0.6);transition:transform .18s}
+.carousel-track img:hover{transform:scale(1.03)}
+
+/* Pop animation on check (softened) */
+.checked-pop { animation:pop-check .22s cubic-bezier(.2,.9,.3,1); }
+@keyframes pop-check{0%{transform:scale(1);opacity:1}45%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}
+
+/* Responsive */
+@media(max-width:900px){.tabs{overflow:auto}.carousel-track img{height:120px}.floating-counter{right:8px;left:auto;top:8px;padding:6px}}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">🎬 Marathon Cinéphile</div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="all">Tous les films</button>
+      <button class="tab-btn" data-tab="seen">Films vus</button>
+      <button class="tab-btn" data-tab="manage">Sections & gestion</button>
+      <button class="tab-btn" data-tab="tmdb">Derniers films (TMDB)</button>
+    </div>
+
+    <div class="header-right">
+      <button id="header-add-btn" class="button" title="Ajouter un film">➕ Ajouter</button>
+      <button id="exportBtn" class="button" title="Exporter la sauvegarde">Exporter</button>
+      <label class="button" style="cursor:pointer"><input id="importFile" type="file" accept="application/json" style="display:none">Importer</label>
+    </div>
+  </header>
+
+  <div class="floating-counter" id="floatingCounter" title="Cliquer pour ouvrir Films vus">
+    <div style="display:flex;align-items:center;gap:8px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:0.95"><path d="M12 2v6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 12h12" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="small" id="floatingText">Vus : 0 / 0</div>
+    </div>
+    <button id="floatingAddBtn" title="Ajouter un film">Ajouter</button>
+  </div>
+
+  <!-- ALL -->
+  <section id="all" class="content" data-tabcontent>
+    <div class="row" style="margin-bottom:12px">
+      <input id="all-search" type="text" placeholder="Rechercher un film, réalisateur ou section..." style="flex:1;min-width:220px">
+      <button id="all-search-btn" class="button">Rechercher</button>
+      <button id="all-reset-btn" class="button">Réinitialiser</button>
+    </div>
+
+    <div id="all-sections"></div>
+
+    <!-- Global add film form at bottom -->
+    <div class="section" id="global-add-film" style="margin-top:18px">
+      <h3>Ajouter un film</h3>
+      <div class="add-form" style="align-items:center">
+        <input id="add-title" type="text" placeholder="Titre">
+        <input id="add-director" type="text" placeholder="Réalisateur">
+        <input id="add-year" type="text" placeholder="Année">
+        <input id="add-wiki" type="text" placeholder="Wiki (optionnel)">
+        <select id="add-section-select"></select>
+        <button id="add-film-btn" class="button">Ajouter</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEEN -->
+  <section id="seen" class="content" style="display:none" data-tabcontent>
+    <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
+      <h3>Films vus</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="seen-add-btn" class="button">Ajouter un film</button>
+      </div>
+    </div>
+    <div id="seen-list" class="small">(Aucun film coché)</div>
+  </section>
+
+  <!-- MANAGE -->
+  <section id="manage" class="content" style="display:none" data-tabcontent>
+    <h3>Sections & gestion</h3>
+    <div class="add-form" style="align-items:center;margin-bottom:8px">
+      <input id="new-section" type="text" placeholder="Nom de la section">
+      <button id="create-section" class="button">Créer</button>
+      <button id="manage-add-btn" class="button">Ajouter un film</button>
+    </div>
+    <div id="manage-list" style="margin-top:12px" class="small"></div>
+  </section>
+
+  <!-- TMDB -->
+  <section id="tmdb" class="content" style="display:none" data-tabcontent>
+    <h3>Derniers films (TMDB)</h3>
+    <div class="row" style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <select id="tmdb-source">
+        <option value="all">Toutes sources</option>
+        <option value="now_playing">En salle</option>
+        <option value="upcoming">À venir</option>
+        <option value="popular">Populaires</option>
+        <option value="recent">Sorties récentes</option>
+      </select>
+      <select id="tmdb-genre"><option value="">Tous genres</option></select>
+      <input id="tmdb-date" type="date" title="Date min">
+      <input id="tmdb-search" type="text" placeholder="Rechercher TMDB..." style="min-width:180px">
+      <button id="tmdb-filter" class="button">Filtrer</button>
+      <button id="tmdb-refresh" class="button">Rafraîchir</button>
+      <div style="margin-left:auto" class="small">Données : TMDB</div>
+    </div>
+
+    <div class="carousel-wrap" id="carousel-wrap">
+      <div class="carousel-bg" id="carousel-bg"></div>
+      <div class="carousel-viewport">
+        <div class="carousel-track" id="carousel-track"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+      <button id="tmdb-sub-all" class="action-btn active">Tous</button>
+      <button id="tmdb-sub-watched" class="action-btn">Films TMDB vus</button>
+    </div>
+    <div id="tmdb-all-container" style="margin-top:12px"></div>
+    <div id="tmdb-watched-container" style="display:none;margin-top:8px"></div>
+
+    <div id="tmdb-list" style="margin-top:12px"></div>
+  </section>
+</div>
+
+<script>
+/* ================== Config ================== */
+const TMDB_API_KEY = '6011d5c690ff0dbf094bd1fcbbc6d336';
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/';
+const STORAGE_KEY = 'marathon_cine_v2';
+
+/* Helpers */
+const el = (t, c, txt) => { const e=document.createElement(t); if(c) e.className=c; if(typeof txt!=='undefined') e.textContent=txt; return e; };
+const qs = s => document.querySelector(s);
+const qsa = s => Array.from(document.querySelectorAll(s));
+
+/* Initial data */
+let initialSections = [
+  {
+    "section": "PARTIE 1 — Grands classiques",
+    "color": "#FF6B6B",
+    "films": [
+      {
+        "title": "Lawrence of Arabia",
+        "director": "David Lean",
+        "year": "1962",
+        "wiki": "https://fr.wikipedia.org/wiki/Lawrence_d%27Arabie",
+        "poster": "https://image.tmdb.org/t/p/w300/jEXGkKEIuyc6012BFpFJpaGOW5a.jpg",
+        "seen": false
+      },
+      {
+        "title": "Oldboy",
+        "director": "Park Chan-wook",
+        "year": 2003,
+        "wiki": "https://fr.wikipedia.org/wiki/Oldboy_(film,_2003)",
+        "poster": "https://image.tmdb.org/t/p/w300/5ArcFdLrYZMFgQmRA2BdTYq9CPy.jpg",
+        "seen": false
+      },
+      {
+        "title": "Mulholland Drive",
+        "director": "David Lynch",
+        "year": 2001,
+        "wiki": "https://fr.wikipedia.org/wiki/Mulholland_Drive",
+        "poster": "https://image.tmdb.org/t/p/w300/x4ZLWoqsXFrkwA1m1T3OQg4P5Z7.jpg",
+        "seen": false
+      },
+      {
+        "title": "Taxi Driver",
+        "director": "Martin Scorsese",
+        "year": 1976,
+        "wiki": "https://fr.wikipedia.org/wiki/Taxi_Driver",
+        "poster": "https://image.tmdb.org/t/p/w300/iyHQrfNsjZlfHJ8hyhNi0yAFnZa.jpg",
+        "seen": false
+      },
+      {
+        "title": "Kill Bill Vol. 1",
+        "director": "Quentin Tarantino",
+        "year": 2003,
+        "wiki": "https://fr.wikipedia.org/wiki/Kill_Bill",
+        "poster": "https://image.tmdb.org/t/p/w300/udRaQKzT0LG4iQFxHLaYjno9uAT.jpg"
+      },
+      {
+        "title": "Requiem for a Dream",
+        "director": "Darren Aronofsky",
+        "year": 2000,
+        "wiki": "https://fr.wikipedia.org/wiki/Requiem_for_a_Dream",
+        "poster": "https://image.tmdb.org/t/p/w300/zRqCRaYXUnAtBBuU1J3DVA4yc5V.jpg"
+      },
+      {
+        "title": "Forrest Gump",
+        "director": "Robert Zemeckis",
+        "year": 1994,
+        "wiki": "https://fr.wikipedia.org/wiki/Forrest_Gump",
+        "poster": "https://image.tmdb.org/t/p/w300/zi6RNYK1vXjIvpSBgjatXRcFYh2.jpg"
+      },
+      {
+        "title": "Get Out",
+        "director": "Jordan Peele",
+        "year": 2017,
+        "wiki": "https://fr.wikipedia.org/wiki/Get_Out",
+        "poster": "https://image.tmdb.org/t/p/w300/8WzjAhgc4HvpN3Y6LLCc6AbpIhF.jpg"
+      },
+      {
+        "title": "The Sixth Sense",
+        "director": "M. Night Shyamalan",
+        "year": 1999,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Sixth_Sense",
+        "poster": "https://image.tmdb.org/t/p/w300/7s3ekiDpic8NxDjwdLdOYDIX8Pe.jpg",
+        "seen": false
+      }
+    ]
+  },
+  {
+    "section": "DAVID FINCHER",
+    "color": "#4DD0E1",
+    "films": [
+      {
+        "title": "Se7en",
+        "director": "David Fincher",
+        "year": 1995,
+        "wiki": "https://fr.wikipedia.org/wiki/Seven_(film,_1995)",
+        "poster": "https://image.tmdb.org/t/p/w300/upIOOLVeOoUkTM5fVWwXW2JmBrW.jpg",
+        "seen": false
+      },
+      {
+        "title": "Zodiac",
+        "director": "David Fincher",
+        "year": 2007,
+        "wiki": "https://fr.wikipedia.org/wiki/Zodiac_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/ajHaO6hqFmvRNsUh3BIFwE5ghsI.jpg",
+        "seen": false
+      },
+      {
+        "title": "Gone Girl",
+        "director": "David Fincher",
+        "year": 2014,
+        "wiki": "https://fr.wikipedia.org/wiki/Gone_Girl_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/7xkJ1ACu40BjzLHVPRILWjFvW7.jpg",
+        "seen": false
+      }
+    ]
+  },
+  {
+    "section": "CINÉMA CORÉEN",
+    "color": "#FF8A65",
+    "films": [
+      {
+        "title": "Parasite",
+        "director": "Bong Joon-ho",
+        "year": 2019,
+        "wiki": "https://fr.wikipedia.org/wiki/Parasite_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/rqpa5dO2zZIHqknnJr8LKwiYHy8.jpg",
+        "seen": false
+      },
+      {
+        "title": "Memories of Murder",
+        "director": "Bong Joon-ho",
+        "year": 2003,
+        "wiki": "https://fr.wikipedia.org/wiki/Memories_of_Murder",
+        "poster": "https://image.tmdb.org/t/p/w300/fz5NYI8PUmPplu3UA70AOqEDJL7.jpg",
+        "seen": false
+      },
+      {
+        "title": "Mother",
+        "director": "Bong Joon-ho",
+        "year": 2009,
+        "wiki": "https://fr.wikipedia.org/wiki/Mother_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/mz5Rf5J56tvYmvVYFUPugjcQCV.jpg"
+      },
+      {
+        "title": "I Saw the Devil",
+        "director": "Kim Jee-woon",
+        "year": 2010,
+        "wiki": "https://fr.wikipedia.org/wiki/I_Saw_the_Devil",
+        "poster": "https://image.tmdb.org/t/p/w300/i3x5Fck0BoAoLRbgPKzSESsrcOR.jpg"
+      }
+    ]
+  },
+  {
+    "section": "CINÉMA JAPONAIS (Samurai & Vagabond)",
+    "color": "#FFD54F",
+    "films": [
+      {
+        "title": "Samurai I: Musashi Miyamoto",
+        "director": "Hiroshi Inagaki",
+        "year": 1954,
+        "wiki": "https://fr.wikipedia.org/wiki/Samurai_I_Musashi_Miyamoto",
+        "poster": "https://image.tmdb.org/t/p/w300/ixqYPzlNA3QfKPZEjAVLHyvg3fG.jpg"
+      },
+      {
+        "title": "Samurai II: Duel at Ichijoji Temple",
+        "director": "Hiroshi Inagaki",
+        "year": 1955,
+        "wiki": "https://fr.wikipedia.org/wiki/Samurai_II_Duel_at_Ichijoji_Temple",
+        "poster": "https://image.tmdb.org/t/p/w300/gR3qCQjt1pepUJSIDtL2DjKtbbO.jpg"
+      },
+      {
+        "title": "Samurai III: Duel at Ganryu Island",
+        "director": "Hiroshi Inagaki",
+        "year": 1956,
+        "wiki": "https://fr.wikipedia.org/wiki/Samurai_III_Duel_at_Ganryu_Island",
+        "poster": "https://image.tmdb.org/t/p/w300/wzZcwGWfdykfIpBzGatXHNIiRZq.jpg"
+      },
+      {
+        "title": "Seven Samurai",
+        "director": "Akira Kurosawa",
+        "year": 1954,
+        "wiki": "https://fr.wikipedia.org/wiki/Seven_Samurai",
+        "poster": "https://image.tmdb.org/t/p/w300/fYNfCxRiBHTo4WAb7OFyTzwdtmp.jpg"
+      },
+      {
+        "title": "Yojimbo",
+        "director": "Akira Kurosawa",
+        "year": 1961,
+        "wiki": "https://fr.wikipedia.org/wiki/Yojimbo",
+        "poster": "https://image.tmdb.org/t/p/w300/eNdU4V5AqDidJllrNYeYafOFo45.jpg"
+      },
+      {
+        "title": "Harakiri",
+        "director": "Masaki Kobayashi",
+        "year": 1962,
+        "wiki": "https://fr.wikipedia.org/wiki/Harakiri_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/57sqCOLupae705vfs98YeSfKpqA.jpg"
+      }
+    ]
+  },
+  {
+    "section": "AUTRES CLASSIQUES INDISPENSABLES",
+    "color": "#81C784",
+    "films": [
+      {
+        "title": "Apocalypse Now",
+        "director": "Francis Ford Coppola",
+        "year": 1979,
+        "wiki": "https://fr.wikipedia.org/wiki/Apocalypse_Now",
+        "poster": "https://image.tmdb.org/t/p/w300/scaiAT7I2KZ2GAeMvoU6Ro1515J.jpg"
+      },
+      {
+        "title": "A Clockwork Orange",
+        "director": "Stanley Kubrick",
+        "year": 1971,
+        "wiki": "https://fr.wikipedia.org/wiki/A_Clockwork_Orange",
+        "poster": "https://image.tmdb.org/t/p/w300/n2oKNiEq9DZljqs6xsxs8hnsW9p.jpg"
+      },
+      {
+        "title": "Chinatown",
+        "director": "Roman Polanski",
+        "year": 1974,
+        "wiki": "https://fr.wikipedia.org/wiki/Chinatown_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/9chbM7rbh6o0Ok6v6mcT0a3GN9E.jpg"
+      },
+      {
+        "title": "No Country for Old Men",
+        "director": "Coen Brothers",
+        "year": 2007,
+        "wiki": "https://fr.wikipedia.org/wiki/No_Country_for_Old_Men",
+        "poster": "https://image.tmdb.org/t/p/w300/6n6VaGkm4b5OeDNGuQ1L5IobQ27.jpg"
+      },
+      {
+        "title": "Heat",
+        "director": "Michael Mann",
+        "year": 1995,
+        "wiki": "https://fr.wikipedia.org/wiki/Heat_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/4miPIzrKBaSznoTBv1bS0sZwoMG.jpg"
+      },
+      {
+        "title": "The Shining",
+        "director": "Stanley Kubrick",
+        "year": 1980,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Shining_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/cnniZQGtjK8kh2tsjih4GtkX6bl.jpg"
+      },
+      {
+        "title": "Whiplash",
+        "director": "Damien Chazelle",
+        "year": 2014,
+        "wiki": "https://fr.wikipedia.org/wiki/Whiplash_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/3XriEpTdnplQRzyphAC0cu3emns.jpg"
+      },
+      {
+        "title": "The Social Network",
+        "director": "David Fincher",
+        "year": 2010,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Social_Network",
+        "poster": "https://image.tmdb.org/t/p/w300/cvUfwhoAReL4e5eegFCHM73rIda.jpg"
+      }
+    ]
+  },
+  {
+    "section": "DEUXIÈME LISTE — Demandes spécifiques",
+    "color": "#BA68C8",
+    "films": [
+      {
+        "title": "Dune (1984)",
+        "director": "David Lynch",
+        "year": 1984,
+        "wiki": "https://fr.wikipedia.org/wiki/Dune_(film,_1984)",
+        "poster": "https://image.tmdb.org/t/p/w300/kq0Umk5PVOx4HAcDcImjjFn79Jy.jpg"
+      },
+      {
+        "title": "Midsommar",
+        "director": "Ari Aster",
+        "year": 2019,
+        "wiki": "https://fr.wikipedia.org/wiki/Midsommar_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/17pvY55Zr60niVovNvgt72mwvES.jpg"
+      },
+      {
+        "title": "Alien 2: Aliens",
+        "director": "James Cameron",
+        "year": 1986,
+        "wiki": "https://fr.wikipedia.org/wiki/Aliens_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/uafMg29wVV4XvxPS59s8nBBbP4i.jpg"
+      },
+      {
+        "title": "Alien 3",
+        "director": "David Fincher",
+        "year": 1992,
+        "wiki": "https://fr.wikipedia.org/wiki/Alien_3",
+        "poster": "https://image.tmdb.org/t/p/w300/qDdLfQJ4rR8zV5NLNVO6w2azp7n.jpg"
+      },
+      {
+        "title": "Alien: Resurrection",
+        "director": "Jean-Pierre Jeunet",
+        "year": 1997,
+        "wiki": "https://fr.wikipedia.org/wiki/Alien:_Resurrection",
+        "poster": "https://image.tmdb.org/t/p/w300/ePPdAnGJk9mR1qNxHhGrIhLAo4Q.jpg"
+      },
+      {
+        "title": "The Lighthouse",
+        "director": "Robert Eggers",
+        "year": 2019,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Lighthouse_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/8DTJq8btlJHVELjasGCa1mLMXUj.jpg"
+      },
+      {
+        "title": "Platoon",
+        "director": "Oliver Stone",
+        "year": 1986,
+        "wiki": "https://fr.wikipedia.org/wiki/Platoon_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/rehBWOx9AIkZRKVuiemWvAMH40.jpg"
+      },
+      {
+        "title": "Logan",
+        "director": "James Mangold",
+        "year": 2017,
+        "wiki": "https://fr.wikipedia.org/wiki/Logan_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/5HB2SsrYNARm4Kom7Amwyb93O4M.jpg"
+      },
+      {
+        "title": "Snowpiercer",
+        "director": "Bong Joon-ho",
+        "year": 2013,
+        "wiki": "https://fr.wikipedia.org/wiki/Snowpiercer",
+        "poster": "https://image.tmdb.org/t/p/w300/vRr9z33hkI0Hp1gCCtV6s1jbf9.jpg"
+      },
+      {
+        "title": "Blue Velvet",
+        "director": "David Lynch",
+        "year": 1986,
+        "wiki": "https://fr.wikipedia.org/wiki/Blue_Velvet_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/zw0JOpVE5IFE8IfAm8zRX0AkB3O.jpg"
+      },
+      {
+        "title": "The Thing",
+        "director": "John Carpenter",
+        "year": 1982,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Thing_(1982_film)",
+        "poster": "https://image.tmdb.org/t/p/w300/gajOIkrWq10MDjpHwCmIt4Yip2z.jpg"
+      },
+      {
+        "title": "Titanic",
+        "director": "James Cameron",
+        "year": 1997,
+        "wiki": "https://fr.wikipedia.org/wiki/Titanic_(film)",
+        "poster": "https://image.tmdb.org/t/p/w300/vpsvHLkoeKUjceIMeNSqCp3xEyY.jpg"
+      },
+      {
+        "title": "La Montagne Sacrée",
+        "director": "Alejandro Jodorowsky",
+        "year": 1973,
+        "wiki": "https://fr.wikipedia.org/wiki/La_montagne_sacree",
+        "poster": "https://image.tmdb.org/t/p/w300/88f9KnD1ZNbPQJ4izmYsqWDatQB.jpg"
+      },
+      {
+        "title": "Napoléon (1927)",
+        "director": "Abel Gance",
+        "year": 1927,
+        "wiki": "https://fr.wikipedia.org/wiki/Napol%C3%A9on_(film)",
+        "seen": false
+      },
+      {
+        "title": "Eyes Wide Shut",
+        "director": "Stanley Kubrick",
+        "year": 1999,
+        "wiki": "https://fr.wikipedia.org/wiki/Eyes_Wide_Shut",
+        "poster": "https://image.tmdb.org/t/p/w300/zrkNeLqUBm6bE2cqY5SBiM6LIf8.jpg"
+      }
+    ]
+  },
+  {
+    "section": "STANLEY KUBRICK (essentiel)",
+    "color": "#90CAF9",
+    "films": [
+      {
+        "title": "Paths of Glory",
+        "director": "Stanley Kubrick",
+        "year": 1957,
+        "wiki": "https://fr.wikipedia.org/wiki/Paths_of_Glory",
+        "poster": "https://image.tmdb.org/t/p/w300/nLGw5N5VLmQR8bPbRMt772FWzCz.jpg"
+      },
+      {
+        "title": "Dr. Strangelove",
+        "director": "Stanley Kubrick",
+        "year": 1964,
+        "wiki": "https://fr.wikipedia.org/wiki/Dr._Strangelove",
+        "poster": "https://image.tmdb.org/t/p/w300/vRTBTIj3LgsiTXMiJ32mfu7WY4T.jpg"
+      },
+      {
+        "title": "2001: A Space Odyssey",
+        "director": "Stanley Kubrick",
+        "year": 1968,
+        "wiki": "https://fr.wikipedia.org/wiki/2001:_A_Space_Odyssey",
+        "poster": "https://image.tmdb.org/t/p/w300/uwd79G32FPIL5B9UkRgSZvS0gbe.jpg"
+      },
+      {
+        "title": "Barry Lyndon",
+        "director": "Stanley Kubrick",
+        "year": 1975,
+        "wiki": "https://fr.wikipedia.org/wiki/Barry_Lyndon",
+        "poster": "https://image.tmdb.org/t/p/w300/prwtTDfRbwdNOzjURTabW3UYW0O.jpg"
+      },
+      {
+        "title": "Full Metal Jacket",
+        "director": "Stanley Kubrick",
+        "year": 1987,
+        "wiki": "https://fr.wikipedia.org/wiki/Full_Metal_Jacket",
+        "poster": "https://image.tmdb.org/t/p/w300/cShwwkz4gBBIRj8yFy8TP2tEWZ4.jpg"
+      }
+    ]
+  },
+  {
+    "section": "PLOT TWISTS & TURNMENTS",
+    "color": "#FFCC80",
+    "films": [
+      {
+        "title": "The Usual Suspects",
+        "director": "Bryan Singer",
+        "year": 1995,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Usual_Suspects",
+        "poster": "https://image.tmdb.org/t/p/w300/h06jDZB4Y9YQJiSGTcUwbhuiUrB.jpg",
+        "seen": false
+      },
+      {
+        "title": "The Prestige",
+        "director": "Christopher Nolan",
+        "year": 2006,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Prestige",
+        "poster": "https://image.tmdb.org/t/p/w300/37Fr7lY4QBHsuxlLJIfTNxW6nGW.jpg"
+      },
+      {
+        "title": "Primal Fear",
+        "director": "Gregory Hoblit",
+        "year": 1996,
+        "wiki": "https://fr.wikipedia.org/wiki/Primal_Fear",
+        "poster": "https://image.tmdb.org/t/p/w300/f6tdI4rjobdtHJViPR2AeFFU8Ae.jpg"
+      },
+      {
+        "title": "Psycho",
+        "director": "Alfred Hitchcock",
+        "year": 1960,
+        "wiki": "https://fr.wikipedia.org/wiki/Psycho",
+        "poster": "https://image.tmdb.org/t/p/w300/lzF8b44dAvXFagQnB1UZa2AF87q.jpg"
+      },
+      {
+        "title": "Shutter Island",
+        "director": "Martin Scorsese",
+        "year": 2010,
+        "wiki": "https://fr.wikipedia.org/wiki/Shutter_Island",
+        "poster": "https://image.tmdb.org/t/p/w300/fQ0vGVTtxjCdAJnxwPZ88O3Wzrh.jpg"
+      },
+      {
+        "title": "The Game",
+        "director": "David Fincher",
+        "year": 1997,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Game",
+        "poster": "https://image.tmdb.org/t/p/w300/2sUcLRG3ZwE8JOrCzk3M6GyCsTx.jpg"
+      }
+    ]
+  },
+  {
+    "section": "QUENTIN TARANTINO",
+    "color": "#F06292",
+    "films": [
+      {
+        "title": "Reservoir Dogs",
+        "director": "Quentin Tarantino",
+        "year": 1992,
+        "wiki": "https://fr.wikipedia.org/wiki/Reservoir_Dogs",
+        "poster": "https://image.tmdb.org/t/p/w300/p61wwD0jWfgbhg9Ja9uoDZdS8YE.jpg",
+        "seen": false
+      },
+      {
+        "title": "Kill Bill Vol. 2",
+        "director": "Quentin Tarantino",
+        "year": 2004,
+        "wiki": "https://fr.wikipedia.org/wiki/Kill_Bill_Vol_2",
+        "poster": "https://image.tmdb.org/t/p/w300/852ZvIARe3CISnX9t96unwSHyoL.jpg"
+      },
+      {
+        "title": "Inglourious Basterds",
+        "director": "Quentin Tarantino",
+        "year": 2009,
+        "wiki": "https://fr.wikipedia.org/wiki/Inglourious_Basterds",
+        "poster": "https://image.tmdb.org/t/p/w300/lPKwFzX4TiWLA4Mo5Bnf8aIIrJm.jpg"
+      },
+      {
+        "title": "Django Unchained",
+        "director": "Quentin Tarantino",
+        "year": 2012,
+        "wiki": "https://fr.wikipedia.org/wiki/Django_Unchained",
+        "poster": "https://image.tmdb.org/t/p/w300/vRXUnWrXUgXRoX0BaEcuNMfyeQt.jpg"
+      },
+      {
+        "title": "The Hateful Eight",
+        "director": "Quentin Tarantino",
+        "year": 2015,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Hateful_Eight",
+        "poster": "https://image.tmdb.org/t/p/w300/kV6ogsiIYzV2qZ43bLuDKuEAIR.jpg"
+      },
+      {
+        "title": "Once Upon a Time… in Hollywood",
+        "director": "Quentin Tarantino",
+        "year": 2019,
+        "wiki": "https://fr.wikipedia.org/wiki/Once_Upon_a_Time%E2%80%A6_in_Hollywood",
+        "poster": "https://image.tmdb.org/t/p/w300/gG5J1KW2Gzj0Sz7al1mGkhXLSoB.jpg"
+      }
+    ]
+  },
+  {
+    "section": "BRIAN DE PALMA",
+    "color": "#FFB74D",
+    "films": [
+      {
+        "title": "Carrie",
+        "director": "Brian De Palma",
+        "year": 1976,
+        "wiki": "https://fr.wikipedia.org/wiki/Carrie",
+        "poster": "https://image.tmdb.org/t/p/w300/zaqBZyy5QeQ4YhiMurGb54TdvtU.jpg"
+      },
+      {
+        "title": "Blow Out",
+        "director": "Brian De Palma",
+        "year": 1981,
+        "wiki": "https://fr.wikipedia.org/wiki/Blow_Out",
+        "poster": "https://image.tmdb.org/t/p/w300/zgyVsJNBdFbUgUUPTWiYBenBTKq.jpg"
+      },
+      {
+        "title": "Scarface",
+        "director": "Brian De Palma",
+        "year": 1983,
+        "wiki": "https://fr.wikipedia.org/wiki/Scarface",
+        "poster": "https://image.tmdb.org/t/p/w300/eGctboDIdxBSxZIcF8iLc8gebd5.jpg",
+        "seen": false
+      },
+      {
+        "title": "The Untouchables",
+        "director": "Brian De Palma",
+        "year": 1987,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Untouchables",
+        "poster": "https://image.tmdb.org/t/p/w300/xrdMy48NrJSJYRplKfuQT0sDfSI.jpg"
+      }
+    ]
+  },
+  {
+    "section": "DAVID LYNCH (suite)",
+    "color": "#A5D6A7",
+    "films": [
+      {
+        "title": "Twin Peaks: Fire Walk With Me",
+        "director": "David Lynch",
+        "year": 1992,
+        "wiki": "https://fr.wikipedia.org/wiki/Twin_Peaks_Fire_Walk_With_Me",
+        "poster": "https://image.tmdb.org/t/p/w300/1uJjOuN7rA66V1Nc6BK4UWIxmIq.jpg"
+      },
+      {
+        "title": "Lost Highway",
+        "director": "David Lynch",
+        "year": 1997,
+        "wiki": "https://fr.wikipedia.org/wiki/Lost_Highway",
+        "poster": "https://image.tmdb.org/t/p/w300/wsMW0D5AxoEiwl1e2HUAmmreUYn.jpg"
+      },
+      {
+        "title": "Eraserhead",
+        "director": "David Lynch",
+        "year": 1977,
+        "wiki": "https://fr.wikipedia.org/wiki/Eraserhead",
+        "poster": "https://image.tmdb.org/t/p/w300/mxveW3mGVc0DzLdOmtkZsgd7c3B.jpg",
+        "seen": false
+      }
+    ]
+  },
+  {
+    "section": "GUILLERMO DEL TORO",
+    "color": "#FF7043",
+    "films": [
+      {
+        "title": "Pan's Labyrinth",
+        "director": "Guillermo del Toro",
+        "year": 2006,
+        "wiki": "https://fr.wikipedia.org/wiki/Pan's_Labyrinth",
+        "poster": "https://image.tmdb.org/t/p/w300/bpzGLrQC5nXvU3wrLtp1TDIKYX9.jpg"
+      },
+      {
+        "title": "The Devil's Backbone",
+        "director": "Guillermo del Toro",
+        "year": 2001,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Devil's_Backbone",
+        "poster": "https://image.tmdb.org/t/p/w300/lauLEU0X2g38Q4ZujzrFgF9jYww.jpg"
+      },
+      {
+        "title": "Crimson Peak",
+        "director": "Guillermo del Toro",
+        "year": 2015,
+        "wiki": "https://fr.wikipedia.org/wiki/Crimson_Peak",
+        "poster": "https://image.tmdb.org/t/p/w300/sTfk9qcg4YE1Svl0854bxnSl3Mx.jpg"
+      },
+      {
+        "title": "Nightmare Alley",
+        "director": "Guillermo del Toro",
+        "year": 2021,
+        "wiki": "https://fr.wikipedia.org/wiki/Nightmare_Alley",
+        "poster": "https://image.tmdb.org/t/p/w300/tbMON6DrX7sb8MCbsPwyQhQkmi3.jpg",
+        "seen": false
+      }
+    ]
+  },
+  {
+    "section": "ALEJANDRO G. IÑÁRRITU",
+    "color": "#64B5F6",
+    "films": [
+      {
+        "title": "The Revenant",
+        "director": "Alejandro González Iñárritu",
+        "year": 2015,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Revenant",
+        "poster": "https://image.tmdb.org/t/p/w300/AsDto68FNWNXD15Ov0yMXASJiSB.jpg"
+      },
+      {
+        "title": "Birdman",
+        "director": "Alejandro González Iñárritu",
+        "year": 2014,
+        "wiki": "https://fr.wikipedia.org/wiki/Birdman",
+        "poster": "https://image.tmdb.org/t/p/w300/9n0u3Ee7OUjgeyF5kIwahxkf4xm.jpg"
+      },
+      {
+        "title": "Babel",
+        "director": "Alejandro González Iñárritu",
+        "year": 2006,
+        "wiki": "https://fr.wikipedia.org/wiki/Babel",
+        "poster": "https://image.tmdb.org/t/p/w300/c2wjEwMF4K81X24CsaBukVuHvBx.jpg"
+      }
+    ]
+  },
+  {
+    "section": "PAUL THOMAS ANDERSON",
+    "color": "#FFD54F",
+    "films": [
+      {
+        "title": "There Will Be Blood",
+        "director": "Paul Thomas Anderson",
+        "year": 2007,
+        "wiki": "https://fr.wikipedia.org/wiki/There_Will_Be_Blood",
+        "poster": "https://image.tmdb.org/t/p/w300/cf4SpPyVRfE1lmlnVIXoii337s2.jpg"
+      },
+      {
+        "title": "The Master",
+        "director": "Paul Thomas Anderson",
+        "year": 2012,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Master",
+        "poster": "https://image.tmdb.org/t/p/w300/yC5ZLtkAIcivxXSOaY2uN4e7mih.jpg"
+      },
+      {
+        "title": "Phantom Thread",
+        "director": "Paul Thomas Anderson",
+        "year": 2017,
+        "wiki": "https://fr.wikipedia.org/wiki/Phantom_Thread",
+        "poster": "https://image.tmdb.org/t/p/w300/ihUl0Gqb0BIeOrvYVmHol8CZLv0.jpg"
+      },
+      {
+        "title": "Boogie Nights",
+        "director": "Paul Thomas Anderson",
+        "year": 1997,
+        "wiki": "https://fr.wikipedia.org/wiki/Boogie_Nights",
+        "poster": "https://image.tmdb.org/t/p/w300/qkgnK7CcefeqIThLyNjQasANGRt.jpg"
+      },
+      {
+        "title": "Magnolia",
+        "director": "Paul Thomas Anderson",
+        "year": 1999,
+        "wiki": "https://fr.wikipedia.org/wiki/Magnolia",
+        "poster": "https://image.tmdb.org/t/p/w300/klhJK5KvHbWkGkO1x5bXzOfQAWp.jpg"
+      }
+    ]
+  },
+  {
+    "section": "CHRISTOPHER NOLAN",
+    "color": "#F48FB1",
+    "films": [
+      {
+        "title": "Memento",
+        "director": "Christopher Nolan",
+        "year": 2000,
+        "wiki": "https://fr.wikipedia.org/wiki/Memento",
+        "poster": "https://image.tmdb.org/t/p/w300/dbkEpzotHJfotpSUSYI36aPC1WN.jpg"
+      },
+      {
+        "title": "The Dark Knight",
+        "director": "Christopher Nolan",
+        "year": 2008,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Dark_Knight",
+        "poster": "https://image.tmdb.org/t/p/w300/pyNXnq8QBWoK3b37RS6C3axwUOy.jpg"
+      },
+      {
+        "title": "Insomnia",
+        "director": "Christopher Nolan",
+        "year": 2002,
+        "wiki": "https://fr.wikipedia.org/wiki/Insomnia",
+        "poster": "https://image.tmdb.org/t/p/w300/eJ49J6QXrTJryC61p43NTAULms.jpg"
+      },
+      {
+        "title": "Dunkirk",
+        "director": "Christopher Nolan",
+        "year": 2017,
+        "wiki": "https://fr.wikipedia.org/wiki/Dunkirk",
+        "poster": "https://image.tmdb.org/t/p/w300/1VOKlC35yrwVKlfBSN52NY4zoF2.jpg"
+      }
+    ]
+  },
+  {
+    "section": "DENIS VILLENEUVE",
+    "color": "#4DD0E1",
+    "films": [
+      {
+        "title": "Prisoners",
+        "director": "Denis Villeneuve",
+        "year": 2013,
+        "wiki": "https://fr.wikipedia.org/wiki/Prisoners",
+        "poster": "https://image.tmdb.org/t/p/w300/fUk1f0iOAezl5PZ7gQW6nrguOXk.jpg"
+      },
+      {
+        "title": "Sicario",
+        "director": "Denis Villeneuve",
+        "year": 2015,
+        "wiki": "https://fr.wikipedia.org/wiki/Sicario",
+        "poster": "https://image.tmdb.org/t/p/w300/uYMvoFiatbs1G3ybN8Wd8VpJWxn.jpg"
+      },
+      {
+        "title": "Enemy",
+        "director": "Denis Villeneuve",
+        "year": 2013,
+        "wiki": "https://fr.wikipedia.org/wiki/Enemy",
+        "poster": "https://image.tmdb.org/t/p/w300/zSgm3qveEDDDXRJp5QcHaIuXIqO.jpg"
+      },
+      {
+        "title": "Arrival",
+        "director": "Denis Villeneuve",
+        "year": 2016,
+        "wiki": "https://fr.wikipedia.org/wiki/Arrival",
+        "poster": "https://image.tmdb.org/t/p/w300/mSgYBWMybY9Ug4ZnCGsttPIjUx7.jpg"
+      }
+    ]
+  },
+  {
+    "section": "MARTIN SCORSESE",
+    "color": "#FF8A65",
+    "films": [
+      {
+        "title": "Raging Bull",
+        "director": "Martin Scorsese",
+        "year": 1980,
+        "wiki": "https://fr.wikipedia.org/wiki/Raging_Bull",
+        "poster": "https://image.tmdb.org/t/p/w300/pbJqnZccb9g6DCrX40Y4eUzRbap.jpg"
+      },
+      {
+        "title": "The Departed",
+        "director": "Martin Scorsese",
+        "year": 2006,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Departed",
+        "poster": "https://image.tmdb.org/t/p/w300/xHeuF5zzlx1YxkULiz0mx1TMBJ7.jpg"
+      },
+      {
+        "title": "Casino",
+        "director": "Martin Scorsese",
+        "year": 1995,
+        "wiki": "https://fr.wikipedia.org/wiki/Casino",
+        "poster": "https://image.tmdb.org/t/p/w300/4a0I37pYcdFY6HeutalHQTGs0sl.jpg"
+      }
+    ]
+  },
+  {
+    "section": "JACKIE CHAN",
+    "color": "#D84315",
+    "films": [
+      {
+        "title": "Police Story",
+        "director": "Jackie Chan",
+        "year": 1985,
+        "wiki": "https://fr.wikipedia.org/wiki/Police_Story",
+        "poster": "https://image.tmdb.org/t/p/w300/zZYk5lyQXPEcuvJIMfXZp6lvYb5.jpg"
+      },
+      {
+        "title": "Drunken Master II",
+        "director": "Jackie Chan",
+        "year": 1994,
+        "wiki": "https://fr.wikipedia.org/wiki/Drunken_Master_II",
+        "poster": "https://image.tmdb.org/t/p/w300/9MSj0X0LVgBacipLKdLO7JpFQdS.jpg"
+      },
+      {
+        "title": "Project A",
+        "director": "Jackie Chan",
+        "year": 1983,
+        "wiki": "https://fr.wikipedia.org/wiki/Project_A",
+        "poster": "https://image.tmdb.org/t/p/w300/wOvYZ74VpU0Gx4owJ2oS9ky95ac.jpg"
+      }
+    ]
+  },
+  {
+    "section": "FILMS DE GUERRE",
+    "color": "#66BB6A",
+    "films": [
+      {
+        "title": "Saving Private Ryan",
+        "director": "Steven Spielberg",
+        "year": 1998,
+        "wiki": "https://fr.wikipedia.org/wiki/Saving_Private_Ryan",
+        "poster": "https://image.tmdb.org/t/p/w300/mlSsQWIQV0NKIqqRQRI0yi9gqk8.jpg"
+      },
+      {
+        "title": "Full Metal Jacket",
+        "director": "Stanley Kubrick",
+        "year": 1987,
+        "wiki": "https://fr.wikipedia.org/wiki/Full_Metal_Jacket",
+        "poster": "https://image.tmdb.org/t/p/w300/cShwwkz4gBBIRj8yFy8TP2tEWZ4.jpg"
+      },
+      {
+        "title": "The Thin Red Line",
+        "director": "Terrence Malick",
+        "year": 1998,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Thin_Red_Line",
+        "poster": "https://image.tmdb.org/t/p/w300/lI1idojUCegX0e6CPMooNugb7O5.jpg"
+      },
+      {
+        "title": "Black Hawk Down",
+        "director": "Ridley Scott",
+        "year": 2001,
+        "wiki": "https://fr.wikipedia.org/wiki/Black_Hawk_Down",
+        "poster": "https://image.tmdb.org/t/p/w300/8PbLgvdfcdBad3sie9cfIBHq2Xz.jpg"
+      }
+    ]
+  },
+  {
+    "section": "NÉORÉALISME & POST-GUERRE",
+    "color": "#64B5F6",
+    "films": [
+      {
+        "title": "The Marriage of Maria Braun",
+        "director": "Rainer Werner Fassbinder",
+        "year": 1979,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Marriage_of_Maria_Braun",
+        "poster": "https://image.tmdb.org/t/p/w300/l3Jgm9Qi1t3fnRhD58sw613rahN.jpg"
+      },
+      {
+        "title": "Wings of Desire",
+        "director": "Wim Wenders",
+        "year": 1987,
+        "wiki": "https://fr.wikipedia.org/wiki/Wings_of_Desire",
+        "poster": "https://image.tmdb.org/t/p/w300/1rtftILuYomSueOl5Z6fRM3IbOx.jpg"
+      },
+      {
+        "title": "Aguirre, the Wrath of God",
+        "director": "Werner Herzog",
+        "year": 1972,
+        "wiki": "https://fr.wikipedia.org/wiki/Aguirre_the_Wrath_of_God",
+        "poster": "https://image.tmdb.org/t/p/w300/oq0TfwtkuMocFuwoHyEILgnbNZM.jpg"
+      },
+      {
+        "title": "Fitzcarraldo",
+        "director": "Werner Herzog",
+        "year": 1982,
+        "wiki": "https://fr.wikipedia.org/wiki/Fitzcarraldo",
+        "poster": "https://image.tmdb.org/t/p/w300/ffWXGB8ZMdL5xgZAELR2M1vD1an.jpg",
+        "seen": false
+      }
+    ]
+  },
+  {
+    "section": "BLOCKBUSTERS & SAGAS",
+    "color": "#FF7043",
+    "films": [
+      {
+        "title": "Terminator",
+        "director": "James Cameron",
+        "year": 1984,
+        "wiki": "https://fr.wikipedia.org/wiki/Terminator",
+        "poster": "https://image.tmdb.org/t/p/w300/oShNrYScpLBi4pyOjytPy9BerRr.jpg"
+      },
+      {
+        "title": "Terminator 2: Judgment Day",
+        "director": "James Cameron",
+        "year": 1991,
+        "wiki": "https://fr.wikipedia.org/wiki/Terminator_2_Judgment_Day",
+        "poster": "https://image.tmdb.org/t/p/w300/mRtFOHF93zW4kTp4JOYrH71vxBh.jpg"
+      },
+      {
+        "title": "Indiana Jones: Raiders of the Lost Ark",
+        "director": "Steven Spielberg",
+        "year": 1981,
+        "wiki": "https://fr.wikipedia.org/wiki/Indiana_Jones_Raiders_of_the_Lost_Ark",
+        "poster": "https://image.tmdb.org/t/p/w300/nTsllJhHBDZndFudSB2RgeHuQAt.jpg"
+      },
+      {
+        "title": "Indiana Jones and the Last Crusade",
+        "director": "Steven Spielberg",
+        "year": 1989,
+        "wiki": "https://fr.wikipedia.org/wiki/Indiana_Jones_and_the_Last_Crusade",
+        "poster": "https://image.tmdb.org/t/p/w300/kD1y7bgbkXvN3RkYogFMlyQR6Ci.jpg"
+      },
+      {
+        "title": "RoboCop",
+        "director": "Paul Verhoeven",
+        "year": 1987,
+        "wiki": "https://fr.wikipedia.org/wiki/RoboCop",
+        "poster": "https://image.tmdb.org/t/p/w300/8LMpX3an8eHTfU1bNwXeGVkBVrZ.jpg"
+      }
+    ]
+  },
+  {
+    "section": "CINEMA CORÉEN (suite)",
+    "color": "#FF8A65",
+    "films": [
+      {
+        "title": "The Wailing",
+        "director": "Na Hong-jin",
+        "year": 2016,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Wailing",
+        "poster": "https://image.tmdb.org/t/p/w300/qmWlSdvzGp4tyJpI76JrEEmU0F2.jpg"
+      },
+      {
+        "title": "Burning",
+        "director": "Lee Chang-dong",
+        "year": 2018,
+        "wiki": "https://fr.wikipedia.org/wiki/Burning",
+        "poster": "https://image.tmdb.org/t/p/w300/pdEgV6PckeiVcnComUw8bOirrpC.jpg"
+      },
+      {
+        "title": "A Bittersweet Life",
+        "director": "Kim Jee-woon",
+        "year": 2005,
+        "wiki": "https://fr.wikipedia.org/wiki/A_Bittersweet_Life",
+        "poster": "https://image.tmdb.org/t/p/w300/7l3PEvgelhqGSvvnnO9kwCOh5pM.jpg"
+      }
+    ]
+  },
+  {
+    "section": "EXPERIENCES / ART & ESSAI",
+    "color": "#BA68C8",
+    "films": [
+      {
+        "title": "Stalker",
+        "director": "Andreï Tarkovski",
+        "year": 1979,
+        "wiki": "https://fr.wikipedia.org/wiki/Stalker",
+        "poster": "https://image.tmdb.org/t/p/w300/vBmOOIIfL9V8VpvS6STSJZ68Ni8.jpg"
+      },
+      {
+        "title": "Persona",
+        "director": "Ingmar Bergman",
+        "year": 1966,
+        "wiki": "https://fr.wikipedia.org/wiki/Persona",
+        "poster": "https://image.tmdb.org/t/p/w300/uUqOvN4t5FSHpheO0rNoTF79hBn.jpg"
+      },
+      {
+        "title": "Enter the Void",
+        "director": "Gaspar Noé",
+        "year": 2009,
+        "wiki": "https://fr.wikipedia.org/wiki/Enter_the_Void",
+        "poster": "https://image.tmdb.org/t/p/w300/skICGEadyeI3qiXbA1Pjx6sOoWU.jpg"
+      },
+      {
+        "title": "The Mirror",
+        "director": "Andreï Tarkovski",
+        "year": 1975,
+        "wiki": "https://fr.wikipedia.org/wiki/The_Mirror",
+        "poster": "https://image.tmdb.org/t/p/w300/3KCrrPy4ogGrNDhGIz0TbY1NhFb.jpg",
+        "seen": false
+      }
+    ]
+  }
+];
+
+let filmsData = [];
+try{
+  const s = localStorage.getItem(STORAGE_KEY);
+  if(s){ const p = JSON.parse(s); if(Array.isArray(p) && p.length) filmsData = p; else filmsData = initialSections; } else filmsData = initialSections;
+}catch(e){ filmsData = initialSections; }
+
+/* Refs */
+const allSectionsEl = qs('#all-sections');
+const seenEl = qs('#seen-list');
+const manageList = qs('#manage-list');
+const addSectionInput = qs('#new-section');
+const exportBtn = qs('#exportBtn');
+const importFile = qs('#importFile');
+const floatingText = qs('#floatingText');
+const floatingAddBtn = qs('#floatingAddBtn');
+const headerAddBtn = qs('#header-add-btn');
+const floatingCounterEl = qs('#floatingCounter');
+
+/* TMDB refs */
+const tmdbSourceEl = qs('#tmdb-source');
+const tmdbGenreEl = qs('#tmdb-genre');
+const tmdbDateEl = qs('#tmdb-date');
+const tmdbSearchEl = qs('#tmdb-search');
+const tmdbFilterBtn = qs('#tmdb-filter');
+const tmdbRefreshBtn = qs('#tmdb-refresh');
+const tmdbListEl = qs('#tmdb-list');
+const carouselTrack = qs('#carousel-track');
+const carouselBg = qs('#carousel-bg');
+const tmdbAllContainer = qs('#tmdb-all-container');
+const tmdbWatchedContainer = qs('#tmdb-watched-container');
+const tmdbSubAllBtn = qs('#tmdb-sub-all');
+const tmdbSubWatchedBtn = qs('#tmdb-sub-watched');
+
+let allSearchQuery = '';
+let tmdbMovies = [], tmdbDisplayed = [], currentTmdbSource = 'all', carouselRAF = null;
+
+/* Save / export / import */
+function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(filmsData)); updateCounters(); }
+exportBtn.addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify(filmsData,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='marathon_export.json'; a.click(); });
+importFile.addEventListener('change', (ev)=>{ const f = ev.target.files && ev.target.files[0]; if(!f) return; const r=new FileReader(); r.onload = ()=>{ try{ const j = JSON.parse(r.result); if(Array.isArray(j)){ filmsData=j; saveData(); renderAll(); renderSeen(); renderManage(); populateSectionSelects(); alert('Import OK'); } else alert('Format JSON non reconnu'); } catch(e){ alert('Erreur JSON'); } ev.target.value=''; }; r.readAsText(f); });
+
+/* ========================= COUNTER (fixed + animation) ========================= */
+/* previous values to detect changes */
+let _prevTotal = null;
+let _prevSeen = null;
+
+function updateCounters(){
+  // count local films
+  const totalLocal = filmsData.reduce((a,s)=> a + (s.films? s.films.length : 0), 0);
+  const seenLocal = filmsData.reduce((a,s)=> a + (s.films? s.films.filter(f=>f.seen).length : 0), 0);
+
+  // count TMDB items stored in localStorage (keys starting with 'tmdb_')
+  let tmdbTotal = 0;
+  let tmdbSeen = 0;
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && typeof k === 'string' && k.startsWith('tmdb_')){
+      tmdbTotal++;
+      try{
+        const v = JSON.parse(localStorage.getItem(k));
+        if(v && v.seen) tmdbSeen++;
+      }catch(e){
+        // if parse error, assume seen (legacy)
+        tmdbSeen++;
+      }
+    }
+  }
+
+  const total = totalLocal + tmdbTotal;
+  const seen = seenLocal + tmdbSeen;
+
+  // update the visible text
+  floatingText.textContent = `Vus : ${seen} / ${total}`;
+
+  // trigger animation if changed
+  if(_prevTotal === null) { _prevTotal = total; _prevSeen = seen; return; }
+  if(_prevTotal !== total || _prevSeen !== seen){
+    // add pulse class
+    try{
+      floatingCounterEl.classList.remove('counter-pulse');
+      // force reflow to restart animation
+      void floatingCounterEl.offsetWidth;
+      floatingCounterEl.classList.add('counter-pulse');
+      // remove after animation duration
+      setTimeout(()=>{ floatingCounterEl.classList.remove('counter-pulse'); }, 320);
+    }catch(e){}
+    _prevTotal = total;
+    _prevSeen = seen;
+  }
+
+  // update watched UI (TMDB watched subtab)
+  updateTmdbWatchedUI();
+}
+
+/* Make floating counter clickable: open "Films vus" */
+if(floatingCounterEl){
+  floatingCounterEl.addEventListener('click', (e)=>{
+    // If click on the inner "Ajouter" button, ignore (it's a separate action)
+    const tgt = e.target;
+    if(tgt && (tgt.id === 'floatingAddBtn' || tgt.closest && tgt.closest('#floatingAddBtn'))) return;
+    // switch tab buttons
+    qsa('.tab-btn').forEach(b=>b.classList.remove('active'));
+    const seenBtn = document.querySelector('.tab-btn[data-tab="seen"]');
+    if(seenBtn) seenBtn.classList.add('active');
+    // hide contents and show seen
+    qsa('[data-tabcontent]').forEach(c=>c.style.display='none');
+    const seenSection = document.getElementById('seen');
+    if(seenSection){
+      seenSection.style.display = 'block';
+      // smooth scroll to top of seen section
+      seenSection.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  });
+}
+
+/* initial prev values to ensure first update shows correctly */
+_prevTotal = null; _prevSeen = null;
+
+/* ============================================================================== */
+
+/* Render ALL */
+function renderAll(){
+  allSectionsEl.innerHTML = '';
+  const q = (allSearchQuery||'').toLowerCase().trim();
+  let globalIndex = 1;
+  filmsData.forEach((sec, si) => {
+    let filmsToShow = sec.films || [];
+    if(q){
+      filmsToShow = filmsToShow.filter(f =>
+        (f.title||'').toLowerCase().includes(q) ||
+        (f.director||'').toLowerCase().includes(q) ||
+        (f.year||'').toString().includes(q) ||
+        (sec.section||'').toLowerCase().includes(q)
+      );
+    }
+    if(q && filmsToShow.length === 0) return;
+
+    const wrap = el('div','section');
+    wrap.style.borderColor = sec.color || '#666';
+    const head = el('div','section-head');
+    const left = el('div','section-info');
+    const h = el('div','section-title', sec.section);
+    h.style.color = sec.color || '#fff';
+    const info = el('div','section-meta', `Films : ${sec.films.length} — Vus : ${ (sec.films||[]).filter(f=>f.seen).length }`);
+    left.appendChild(h); left.appendChild(info);
+
+    const right = el('div');
+    // ADD button already present — keep at same spot
+    const addBtn = el('button','action-btn','Ajouter un film'); addBtn.style.marginLeft='8px'; addBtn.style.color='#fff';
+    addBtn.addEventListener('click', ()=> openInlineAdd(wrap, si));
+    const renameBtn = el('button','action-btn','Renommer'); renameBtn.style.marginLeft='8px'; renameBtn.style.color='#fff';
+    renameBtn.addEventListener('click', ()=>{ const n = prompt('Nouveau nom', sec.section); if(n){ filmsData[si].section = n.trim(); saveData(); renderAll(); renderManage(); }});
+    const delBtn = el('button','action-delete','Supprimer'); delBtn.style.marginLeft='6px';
+    delBtn.addEventListener('click', ()=>{ if(confirm('Supprimer section et ses films ?')){ filmsData.splice(si,1); saveData(); renderAll(); renderManage(); populateSectionSelects(); }});
+    right.appendChild(addBtn); right.appendChild(renameBtn); right.appendChild(delBtn);
+
+    head.appendChild(left); head.appendChild(right);
+    wrap.appendChild(head);
+
+    filmsToShow.forEach((f, fi) => {
+      const row = el('div','film');
+      const num = el('div','num', globalIndex);
+      const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!f.seen;
+      cb.style.marginLeft='0';
+      cb.addEventListener('change', () => {
+        filmsData[si].films[fi].seen = cb.checked;
+        saveData();
+        row.classList.remove('checked-pop');
+        void row.offsetWidth;
+        row.classList.add('checked-pop');
+        setTimeout(()=>row.classList.remove('checked-pop'), 300);
+        renderSeen();
+        info.textContent = `Films : ${sec.films.length} — Vus : ${ (sec.films||[]).filter(x=>x.seen).length }`;
+      });
+
+      const poster = el('img'); poster.style.width='64px';
+      if(f.poster){ poster.src = f.poster; } else poster.style.display='none';
+      if(!f.poster && f.title){ fetchPosterForStatic(f.title, f.year).then(url=>{ if(url){ filmsData[si].films[fi].poster = url; saveData(); renderAll(); } }).catch(()=>{}); }
+
+      const txt = el('div');
+      const title = el('div','title', f.title + (f.year? ' ('+f.year+')':'' ));
+      const meta = el('div','meta', f.director || '');
+      txt.appendChild(title); txt.appendChild(meta);
+
+      const actions = el('div','actions');
+      if(f.wiki){ const a = el('a','wiki-link','Wiki'); a.href = f.wiki; a.target='_blank'; actions.appendChild(a); }
+      const editBtn = el('button','action-btn','✏️'); editBtn.title='Modifier';
+      editBtn.addEventListener('click', ()=> editFilm(si, fi));
+      const delBtn2 = el('button','action-delete','🗑️'); delBtn2.title='Supprimer';
+      delBtn2.addEventListener('click', ()=>{ if(confirm('Supprimer ce film ?')){ filmsData[si].films.splice(fi,1); saveData(); renderAll(); renderManage(); }});
+      actions.appendChild(editBtn); actions.appendChild(delBtn2);
+
+      row.appendChild(num);
+      // Put checkbox immediately after number (no extra gap)
+      row.appendChild(cb);
+      row.appendChild(poster); row.appendChild(txt); row.appendChild(actions);
+      wrap.appendChild(row);
+      globalIndex++;
+    });
+
+    allSectionsEl.appendChild(wrap);
+  });
+
+  const bottom = el('div','section');
+  const bh = el('h3', null, 'Créer une section rapidement'); bottom.appendChild(bh);
+  const bf = el('div','add-form');
+  const bi = document.createElement('input'); bi.placeholder='Nom de la section';
+  const bb = el('button','button','Créer');
+  bb.addEventListener('click', ()=>{ const n = bi.value.trim(); if(!n){ alert('Nom requis'); return; } filmsData.push({ section: n, color: randomColor(), films: [] }); saveData(); renderAll(); renderManage(); populateSectionSelects(); bi.value=''; });
+  bf.appendChild(bi); bf.appendChild(bb); bottom.appendChild(bf);
+  allSectionsEl.appendChild(bottom);
+
+  populateSectionSelects();
+}
+
+/* Inline add inside a section (reused) */
+function openInlineAdd(wrap, si){
+  // if there is already an inline form, toggle it
+  const existing = wrap.querySelector('.inline-form');
+  if(existing){ existing.remove(); return; }
+  const form = el('div','inline-form');
+  const t = document.createElement('input'); t.placeholder='Titre';
+  const d = document.createElement('input'); d.placeholder='Réalisateur';
+  const y = document.createElement('input'); y.placeholder='Année';
+  const w = document.createElement('input'); w.placeholder='Wiki (optionnel)';
+  const ok = el('button','button','Ajouter');
+  ok.addEventListener('click', async ()=>{
+    const newFilm = { title: t.value.trim(), director: d.value.trim(), year: y.value.trim(), wiki: w.value.trim() || autoWiki(t.value.trim()), poster:null, seen:false };
+    if(!newFilm.title){ alert('Titre requis'); return; }
+    filmsData[si].films.push(newFilm);
+    saveData();
+    if(!newFilm.poster) fetchPosterForStatic(newFilm.title,newFilm.year).then(url=>{ if(url){ newFilm.poster = url; saveData(); renderAll(); } }).catch(()=>{});
+    renderAll(); renderManage(); renderSeen();
+    form.remove();
+  });
+  const cancel = el('button','action-btn','Annuler');
+  cancel.addEventListener('click', ()=> form.remove());
+  form.appendChild(t); form.appendChild(d); form.appendChild(y); form.appendChild(w); form.appendChild(ok); form.appendChild(cancel);
+  wrap.appendChild(form);
+
+  // Autofill in inline form: debounce 300ms and OVERWRITE fields (per your request)
+  let inlineTimer = null;
+  t.addEventListener('input', ()=> {
+    clearTimeout(inlineTimer);
+    inlineTimer = setTimeout(async ()=>{
+      const q = t.value.trim();
+      if(!q) return;
+      const details = await fetchTMDBDetailsByTitle(q);
+      if(details){
+        // overwrite director/year/wiki as user requested
+        d.value = details.director || '';
+        y.value = details.year || '';
+        w.value = details.wiki || (details.title ? autoWiki(details.title) : '');
+      }
+    }, 300);
+  });
+}
+
+/* Render Seen */
+function renderSeen(){
+  const list = [];
+  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section'}); }); });
+  // TMDB seen
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith('tmdb_')){
+      try{
+        const v = JSON.parse(localStorage.getItem(k));
+        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_','') });
+      }catch(e){}
+    }
+  }
+
+  seenEl.innerHTML = '';
+  if(list.length === 0){ seenEl.textContent = '(Aucun film coché)'; return; }
+  list.forEach((it,i) => {
+    const row = el('div','film');
+    const n = el('div','num', i+1);
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = true;
+    cb.style.marginLeft='0';
+    cb.addEventListener('change', ()=>{
+      // If TMDB: remove localStorage entry (Option A). If section source: set seen=false in filmsData.
+      if(it.source === 'tmdb'){
+        try{ localStorage.removeItem('tmdb_'+it.id); }catch(e){}
+      } else {
+        // find and unmark in filmsData
+        for(let si=0; si<filmsData.length; si++){
+          const fidx = filmsData[si].films.findIndex(ff=> ff.title===it.title && (ff.year||'')=== (it.year||''));
+          if(fidx !== -1){ filmsData[si].films[fidx].seen = false; break; }
+        }
+        saveData();
+      }
+      updateCounters(); renderSeen(); renderAll(); updateTmdbWatchedUI();
+    });
+    const img = el('img'); if(it.poster){ img.src = it.poster; img.style.width='48px'; } else img.style.display='none';
+    const info = el('div');
+    const t = el('div','title', it.title + (it.year? ' ('+it.year+')':'' ));
+    const s = el('div','small', it.section || '');
+    if(it.director) { const d = el('div','meta', it.director); info.appendChild(d); }
+    info.appendChild(t); info.appendChild(s);
+    row.appendChild(n); row.appendChild(cb); row.appendChild(img); row.appendChild(info);
+    seenEl.appendChild(row);
+  });
+}
+
+/* Render manage */
+function renderManage(){
+  manageList.innerHTML = '';
+  filmsData.forEach((s,i) => {
+    const row = el('div',null); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.marginBottom='8px';
+    const left = el('div',null, `${s.section} — ${s.films.length} films`);
+    const right = el('div');
+    const ren = el('button','action-btn','✏️'); ren.style.marginLeft='8px'; ren.addEventListener('click', ()=> { const n = prompt('Nouveau nom', s.section); if(n){ filmsData[i].section = n.trim(); saveData(); renderManage(); renderAll(); }});
+    const rem = el('button','action-delete','🗑️'); rem.style.marginLeft='6px'; rem.addEventListener('click', ()=> { if(confirm('Supprimer la section ?')){ filmsData.splice(i,1); saveData(); renderManage(); renderAll(); populateSectionSelects(); }});
+    right.appendChild(ren); right.appendChild(rem);
+    row.appendChild(left); row.appendChild(right);
+    manageList.appendChild(row);
+  });
+}
+
+/* Edit film */
+function editFilm(si, fi){
+  const f = filmsData[si].films[fi];
+  const t = prompt('Titre', f.title); if(t===null) return;
+  const d = prompt('Réalisateur', f.director||''); if(d===null) return;
+  const y = prompt('Année', f.year||''); if(y===null) return;
+  const w = prompt('Wiki (laisser vide auto)', f.wiki||'');
+  f.title = t; f.director = d; f.year = y; f.wiki = w ? w : autoWiki(f.title);
+  saveData(); renderAll(); renderManage(); renderSeen();
+}
+function autoWiki(title){ if(!title) return ''; let s = title.replace(/[:(),]/g,'').replace(/\s+/g,'_'); return 'https://fr.wikipedia.org/wiki/' + encodeURIComponent(s); }
+function randomColor(){ const letters='456789ABCDEF'; let c='#'; for(let i=0;i<6;i++) c+=letters[Math.floor(Math.random()*letters.length)]; return c; }
+
+/* Poster fetch helper (TMDB search) */
+async function fetchPosterForStatic(title, year){
+  if(!title) return null;
+  try{
+    let q = encodeURIComponent(title + (year? ' '+year : ''));
+    let r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
+    let j = await r.json();
+    if(j && j.results && j.results[0] && j.results[0].poster_path) return TMDB_IMAGE_BASE + 'w300' + j.results[0].poster_path;
+    q = encodeURIComponent(title);
+    r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
+    j = await r.json();
+    if(j && j.results && j.results[0] && j.results[0].poster_path) return TMDB_IMAGE_BASE + 'w300' + j.results[0].poster_path;
+  }catch(e){}
+  return null;
+}
+
+/* ================= TMDB advanced ================= */
+async function tmdbFetchGenres(){
+  try{
+    const r = await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${TMDB_API_KEY}&language=fr-FR`);
+    const j = await r.json();
+    (j.genres||[]).forEach(g=>{ if(!Array.from(tmdbGenreEl.options).some(o=>o.value==g.id)){ const o=document.createElement('option'); o.value=g.id; o.textContent=g.name; tmdbGenreEl.appendChild(o); } });
+  }catch(e){ console.error('tmdbFetchGenres', e); }
+}
+async function fetchFromEndpoint(endpoint, pagesToFetch=4, extraParams=''){
+  let all = [];
+  for(let p=1;p<=pagesToFetch;p++){
+    try{
+      const url = `https://api.themoviedb.org/3/movie/${endpoint}?api_key=${TMDB_API_KEY}&language=fr-FR&page=${p}${extraParams}`;
+      const r = await fetch(url); const j = await r.json();
+      if(j && j.results && j.results.length) all = all.concat(j.results);
+      if(j.page && j.total_pages && j.page >= j.total_pages) break;
+    }catch(e){ console.error('fetchFromEndpoint', endpoint, e); break; }
+  }
+  return all;
+}
+async function fetchDiscover(pagesToFetch=4){
+  let all = []; const today=new Date().toISOString().split('T')[0]; const sixMonthsAgo=new Date(Date.now()-180*24*60*60*1000).toISOString().split('T')[0];
+  for(let p=1;p<=pagesToFetch;p++){
+    try{
+      const url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&page=${p}&region=FR&sort_by=release_date.desc&primary_release_date.gte=${sixMonthsAgo}&primary_release_date.lte=${today}&with_release_type=2|3`;
+      const r = await fetch(url); const j = await r.json();
+      if(j && j.results && j.results.length) all = all.concat(j.results);
+      if(j.page && j.total_pages && j.page >= j.total_pages) break;
+    }catch(e){ console.error('fetchDiscover', e); break;
+}  }
+  return all;
+}
+async function fetchDirector(movieId){
+  try{
+    const r = await fetch(`https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=fr-FR`);
+    const j = await r.json();
+    if(j && j.crew){
+      const d = j.crew.find(c=> c.job==='Director' || c.job==='Réalisateur' || c.job==='director');
+      return d ? d.name : '';
+    }
+  }catch(e){}
+  return '';
+}
+function dedupeById(arr){ const seen = new Set(); return arr.filter(it=>{ if(!it||!it.id) return false; if(seen.has(it.id)) return false; seen.add(it.id); return true; }); }
+
+async function fetchTMDBCombined(source='all'){
+  if(!tmdbListEl) return;
+  tmdbListEl.textContent = 'Chargement TMDB...';
+  try{
+    let all = [];
+    if(source==='all' || source==='now_playing'){ const now = await fetchFromEndpoint('now_playing',4,'&region=FR'); all = all.concat(now.map(m=>({...m,_source:'now_playing'}))); }
+    if(source==='all' || source==='upcoming'){ const up = await fetchFromEndpoint('upcoming',4,'&region=FR'); all = all.concat(up.map(m=>({...m,_source:'upcoming'}))); }
+    if(source==='all' || source==='popular'){ const pop = await fetchFromEndpoint('popular',4,''); const sixMonthsAgo = new Date(Date.now()-180*24*60*60*1000).toISOString().split('T')[0]; const recentPop = pop.filter(m=> m.release_date && m.release_date >= sixMonthsAgo); all = all.concat(recentPop.map(m=>({...m,_source:'popular'}))); }
+    if(source==='all' || source==='recent'){ const disc = await fetchDiscover(4); all = all.concat(disc.map(m=>({...m,_source:'recent'}))); }
+
+    tmdbMovies = dedupeById(all);
+    tmdbMovies.sort((a,b)=> (new Date(b.release_date||'1900-01-01')) - (new Date(a.release_date||'1900-01-01')));
+    tmdbDisplayed = tmdbMovies.slice();
+    displayTMDB(tmdbDisplayed);
+    buildCarousel();
+    updateCounters();
+    console.log('TMDB loaded', tmdbMovies.length);
+  }catch(e){ tmdbListEl.textContent='Erreur TMDB'; console.error('fetchTMDBCombined', e); }
+}
+
+/* Apply filters */
+function applyTmdbFilters(){
+  const g = tmdbGenreEl.value; const d = tmdbDateEl.value; const q = (tmdbSearchEl.value||'').trim().toLowerCase();
+  let list = tmdbMovies.slice();
+  if(g) list = list.filter(m=> (m.genre_ids||[]).includes(parseInt(g)));
+  if(d) list = list.filter(m=> m.release_date && m.release_date >= d);
+  if(q) list = list.filter(m=> ((m.title||'')+' '+(m.original_title||'')).toLowerCase().includes(q));
+  tmdbDisplayed = list;
+  displayTMDB(list);
+  buildCarousel();
+}
+
+/* Display TMDB list + checkbox behavior: when checked mark in localStorage (seen) */
+function displayTMDB(list){
+  tmdbAllContainer.innerHTML = '';
+  tmdbListEl.innerHTML = '';
+  if(!list || list.length === 0){ tmdbListEl.textContent = 'Aucun film trouvé.'; return; }
+  const countInfo = el('div','small', `${list.length} film${list.length>1?'s':''} trouvé${list.length>1?'s':''} sur TMDB`);
+  countInfo.style.marginBottom = '10px'; countInfo.style.color='var(--accent)';
+  tmdbAllContainer.appendChild(countInfo);
+  const staticCount = filmsData.reduce((acc,s)=> acc + (s.films||[]).length, 0);
+  for(let i=0;i<list.length;i++){
+    const m = list[i];
+    const row = el('div','film');
+    const num = el('div','num', staticCount + i + 1);
+    const cb = document.createElement('input'); cb.type='checkbox';
+    const existing = !!localStorage.getItem('tmdb_'+m.id);
+    cb.checked = existing;
+    cb.style.marginLeft='0';
+    cb.addEventListener('change', async ()=>{
+      if(cb.checked){
+        const key = 'tmdb_' + m.id;
+        const obj = { title: m.title || '', poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, release_date: m.release_date || '', source: m._source || '', seen: true };
+        try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){}
+        fetchDirector(m.id).then(name=>{ if(name){ try{ const cur = JSON.parse(localStorage.getItem(key)||'{}'); cur.director = name; cur.seen = true; localStorage.setItem(key, JSON.stringify(cur)); }catch(e){} updateCounters(); renderSeen(); updateTmdbWatchedUI(); }});
+        updateCounters(); renderSeen(); updateTmdbWatchedUI();
+      } else {
+        // Option A: remove from localStorage entirely
+        try{ localStorage.removeItem('tmdb_'+m.id); }catch(e){}
+        updateCounters(); renderSeen(); updateTmdbWatchedUI();
+      }
+    });
+    const poster = el('img','poster-mid'); if(m.poster_path) poster.src = TMDB_IMAGE_BASE + 'w300' + m.poster_path; else poster.style.display='none';
+    const txt = el('div',null);
+    const title = el('div','title', m.title || m.name || '');
+    title.style.fontSize='16px';
+    if(m._source){ const badge = el('span','small', ` [${m._source}]`); badge.style.marginLeft='6px'; badge.style.color='#ffd54f'; title.appendChild(badge); }
+    const dir = el('div','meta','Réalisateur: …'); fetchDirector(m.id).then(name=>{ if(name) dir.textContent = 'Réalisateur: ' + name; });
+    const date = el('div','meta', m.release_date ? `Sortie: ${m.release_date}` : '');
+    txt.appendChild(title); txt.appendChild(dir); txt.appendChild(date);
+    row.appendChild(num); row.appendChild(cb); row.appendChild(poster); row.appendChild(txt);
+    tmdbAllContainer.appendChild(row);
+  }
+  updateTmdbWatchedUI();
+}
+
+/* Render TMDB watched list view */
+function updateTmdbWatchedUI(){
+  const container = tmdbWatchedContainer;
+  if(!container) return;
+  container.innerHTML = '';
+  const ids = [];
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith('tmdb_')) ids.push(k.replace('tmdb_',''));
+  }
+  if(ids.length === 0){ container.textContent = 'Aucun film TMDB marqué comme vu.'; return; }
+
+  // Build rows with ability to add to a section and to uncheck (remove)
+  ids.forEach(id=>{
+    try{
+      const v = JSON.parse(localStorage.getItem('tmdb_'+id));
+      const row = el('div','film');
+      const n = el('div','num', '#'+id);
+      const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = true; cb.style.marginLeft='0';
+      cb.addEventListener('change', ()=>{
+        // Option A: remove localStorage entry
+        try{ localStorage.removeItem('tmdb_'+id); }catch(e){}
+        updateCounters(); renderSeen(); updateTmdbWatchedUI(); displayTMDB(tmdbDisplayed);
+      });
+      const img = el('img'); if(v && v.poster){ img.src = v.poster; img.style.width='64px'; } else img.style.display='none';
+      const info = el('div', null);
+      const t = el('div','title', v.title + (v.release_date? ' ('+(v.release_date.split('-')[0]) +')' : ''));
+      const m = el('div','meta', v.director || '');
+      info.appendChild(t); info.appendChild(m);
+      // add-to-section UI
+      const addSectionWrap = el('div',null);
+      const sel = document.createElement('select'); sel.style.marginLeft='8px';
+      filmsData.forEach((s,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent = s.section; sel.appendChild(o); });
+      const addBtn = el('button','button','Ajouter à une section'); addBtn.style.marginLeft='6px';
+      addBtn.addEventListener('click', ()=>{
+        const idx = parseInt(sel.value,10);
+        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, seen: true };
+        filmsData[idx].films.push(newFilm);
+        saveData();
+        updateCounters();
+        renderAll();
+        renderSeen();
+        alert(`Ajouté à la section "${filmsData[idx].section}"`);
+      });
+
+      row.appendChild(n); row.appendChild(cb); row.appendChild(img); row.appendChild(info);
+      addSectionWrap.appendChild(sel); addSectionWrap.appendChild(addBtn);
+      row.appendChild(addSectionWrap);
+      container.appendChild(row);
+    }catch(e){}
+  });
+}
+
+/* Carousel build/start */
+function buildCarousel(){
+  if(!carouselTrack) return;
+  carouselTrack.innerHTML = '';
+  const posters = tmdbMovies.filter(m=>m.poster_path).map(m=> TMDB_IMAGE_BASE + 'w500' + m.poster_path);
+  let items = posters.slice();
+  if(items.length < 6) items = items.concat(items);
+  items.forEach(src=>{ const img=document.createElement('img'); img.src = src; carouselTrack.appendChild(img); });
+  if(posters[0]) carouselBg.style.backgroundImage = `url(${posters[0]})`;
+  startCarousel();
+}
+function startCarousel(){
+  const wrap = document.getElementById('carousel-wrap');
+  const track = document.getElementById('carousel-track');
+  if(!wrap||!track) return;
+  wrap.scrollLeft = 0;
+  if(carouselRAF) cancelAnimationFrame(carouselRAF);
+  const speed = 0.35;
+  function step(){ wrap.scrollLeft += speed; if(wrap.scrollLeft + wrap.clientWidth >= track.scrollWidth - 1) wrap.scrollLeft = 0; carouselRAF = requestAnimationFrame(step); }
+  wrap.onmouseenter = ()=>{ if(carouselRAF) cancelAnimationFrame(carouselRAF); };
+  wrap.onmouseleave = ()=>{ carouselRAF = requestAnimationFrame(step); };
+  carouselRAF = requestAnimationFrame(step);
+}
+
+/* Setup tab buttons and actions */
+qsa('.tab-btn').forEach(btn => btn.addEventListener('click', ()=>{
+  qsa('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  qsa('[data-tabcontent]').forEach(c=>c.style.display='none');
+  const id = btn.dataset.tab; const eln = document.getElementById(id); if(eln) eln.style.display='block';
+  if(id==='tmdb'){ tmdbFetchGenres(); fetchTMDBCombined(currentTmdbSource); }
+}));
+
+/* All search */
+qs('#all-search-btn').addEventListener('click', ()=>{ allSearchQuery = qs('#all-search').value || ''; renderAll(); });
+qs('#all-reset-btn').addEventListener('click', ()=>{ allSearchQuery=''; qs('#all-search').value=''; renderAll(); });
+qs('#all-search').addEventListener('keyup', (e)=>{ if(e.key==='Enter'){ allSearchQuery = e.target.value; renderAll(); } });
+
+/* Manage create section */
+qs('#create-section')?.addEventListener('click', ()=>{ const n = addSectionInput.value.trim(); if(!n){ alert('Nom requis'); return; } filmsData.push({ section: n, color: randomColor(), films: [] }); saveData(); renderAll(); renderManage(); populateSectionSelects(); addSectionInput.value=''; });
+
+/* Global add film (with intelligent autofill: debounce 300ms, overwrites fields) */
+const addTitle = qs('#add-title'), addDirector = qs('#add-director'), addYear = qs('#add-year'), addWiki = qs('#add-wiki'), addSectionSelect = qs('#add-section-select'), addFilmBtn = qs('#add-film-btn');
+let addDebounce = null;
+addTitle.addEventListener('input', ()=> {
+  clearTimeout(addDebounce);
+  addDebounce = setTimeout(async ()=>{
+    const q = addTitle.value.trim();
+    if(!q) return;
+    const details = await fetchTMDBDetailsByTitle(q);
+    if(details){
+      // Overwrite fields as requested
+      addDirector.value = details.director || '';
+      addYear.value = details.year || '';
+      addTitle.dataset.poster = details.poster || '';
+      addWiki.value = details.wiki || (details.title ? autoWiki(details.title) : '');
+    }
+  }, 300); // 300ms debounce -> very reactive, close to "every letter"
+});
+addTitle.addEventListener('blur', async ()=> {
+  clearTimeout(addDebounce);
+  const q = addTitle.value.trim();
+  if(!q) return;
+  const details = await fetchTMDBDetailsByTitle(q);
+  if(details){
+    addDirector.value = details.director || '';
+    addYear.value = details.year || '';
+    addTitle.dataset.poster = details.poster || '';
+    addWiki.value = details.wiki || (details.title ? autoWiki(details.title) : '');
+  }
+});
+
+addFilmBtn.addEventListener('click', async ()=>{
+  const title = addTitle.value.trim(); if(!title){ alert('Titre requis'); return; }
+  let director = addDirector.value.trim(); let year = addYear.value.trim(); let wiki = addWiki.value.trim();
+  const si = parseInt(addSectionSelect.value||0,10);
+  if(!director || !year || !wiki){
+    const details = await fetchTMDBDetailsByTitle(title);
+    if(details){
+      if(!director) director = details.director;
+      if(!year) year = details.year;
+      if(!wiki) wiki = details.wiki;
+      if(details.poster) addTitle.dataset.poster = addTitle.dataset.poster || details.poster;
+    }
+  }
+  if(!wiki) wiki = autoWiki(title);
+  const film = { title, director, year, wiki, poster: addTitle.dataset.poster || null, seen:false };
+  filmsData[si].films.push(film); saveData();
+  const p = await fetchPosterForStatic(title, year); if(p){ film.poster = p; saveData(); }
+  renderAll(); renderManage(); renderSeen();
+  addTitle.value=''; addDirector.value=''; addYear.value=''; addWiki.value=''; addTitle.dataset.poster='';
+});
+
+/* Additional add buttons - manage-add-btn opens a global inline form */
+qs('#seen-add-btn')?.addEventListener('click', ()=> openGlobalInlineAdd());
+qs('#manage-add-btn')?.addEventListener('click', ()=> {
+  const existing = document.querySelector('#manage-inline-add');
+  if(existing){ existing.remove(); return; }
+  const container = manageList;
+  const f = el('div','inline-form'); f.id='manage-inline-add';
+  const sel = document.createElement('select');
+  filmsData.forEach((s,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=s.section; sel.appendChild(o); });
+  const t=document.createElement('input'); t.placeholder='Titre';
+  const d=document.createElement('input'); d.placeholder='Réalisateur';
+  const y=document.createElement('input'); y.placeholder='Année';
+  const w=document.createElement('input'); w.placeholder='Wiki (optionnel)';
+  let mTimer=null;
+  t.addEventListener('input', ()=>{ clearTimeout(mTimer); mTimer=setTimeout(async ()=>{ const details = await fetchTMDBDetailsByTitle(t.value.trim()); if(details){ d.value = details.director || ''; y.value = details.year || ''; w.value = details.wiki || ''; t.dataset.poster = details.poster || t.dataset.poster; } }, 300); });
+  const ok = el('button','button','Ajouter'); ok.addEventListener('click', async ()=>{
+    const idx = parseInt(sel.value,10);
+    const newFilm={ title:t.value.trim(), director:d.value.trim(), year:y.value.trim(), wiki:w.value.trim() || autoWiki(t.value.trim()), poster:t.dataset.poster||null, seen:false };
+    if(!newFilm.title){ alert('Titre requis'); return; }
+    filmsData[idx].films.push(newFilm);
+    saveData(); renderAll(); renderManage(); renderSeen(); f.remove(); populateSectionSelects();
+  });
+  const cancel=el('button','action-btn','Annuler'); cancel.addEventListener('click', ()=> f.remove());
+  f.appendChild(sel); f.appendChild(t); f.appendChild(d); f.appendChild(y); f.appendChild(w); f.appendChild(ok); f.appendChild(cancel);
+  container.prepend(f);
+});
+floatingAddBtn.addEventListener('click', ()=> openGlobalInlineAdd());
+headerAddBtn.addEventListener('click', ()=> { window.location.hash = '#global-add-film'; qs('#add-title').focus(); });
+
+function openGlobalInlineAdd(){
+  qsa('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="all"]').classList.add('active');
+  qsa('[data-tabcontent]').forEach(c=>c.style.display='none');
+  document.getElementById('all').style.display='block';
+  document.getElementById('global-add-film').scrollIntoView({behavior:'smooth', block:'center'});
+  qs('#add-title').focus();
+}
+
+/* TMDB bindings */
+qs('#tmdb-filter')?.addEventListener('click', ()=> applyTmdbFilters());
+qs('#tmdb-refresh')?.addEventListener('click', ()=> fetchTMDBCombined(currentTmdbSource));
+tmdbSourceEl.addEventListener('change', (e)=>{ currentTmdbSource = e.target.value; fetchTMDBCombined(currentTmdbSource); });
+tmdbSearchEl.addEventListener('input', ()=> applyTmdbFilters());
+
+/* Subtab buttons for TMDB */
+tmdbSubAllBtn.addEventListener('click', ()=> { tmdbAllContainer.style.display='block'; tmdbWatchedContainer.style.display='none'; tmdbSubAllBtn.classList.add('active'); tmdbSubWatchedBtn.classList.remove('active'); });
+tmdbSubWatchedBtn.addEventListener('click', ()=> { tmdbAllContainer.style.display='none'; tmdbWatchedContainer.style.display='block'; tmdbSubWatchedBtn.classList.add('active'); tmdbSubAllBtn.classList.remove('active'); updateTmdbWatchedUI(); });
+
+/* Populate section selects */
+function populateSectionSelects(){
+  const sel = qs('#add-section-select'); if(sel){ sel.innerHTML=''; filmsData.forEach((s,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent = s.section; sel.appendChild(o); }); }
+}
+
+/* initial render */
+renderAll(); renderSeen(); renderManage(); populateSectionSelects(); updateCounters();
+
+/* TMDB initial */
+tmdbFetchGenres(); fetchTMDBCombined(currentTmdbSource);
+
+/* auto refresh TMDB when active every 10 minutes */
+setInterval(()=>{ const active = document.querySelector('.tab-btn.active')?.dataset?.tab; if(active==='tmdb') fetchTMDBCombined(currentTmdbSource); }, 10*60*1000);
+
+/* ================= Utility: fetch TMDB details by title (director, year, poster, wiki) ================= */
+async function fetchTMDBDetailsByTitle(title){
+  if(!title) return null;
+  try{
+    const q = encodeURIComponent(title);
+    const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
+    const j = await r.json();
+    if(!j || !j.results || j.results.length === 0) return null;
+    const movie = j.results[0];
+    const year = movie.release_date ? movie.release_date.split('-')[0] : '';
+    const poster = movie.poster_path ? (TMDB_IMAGE_BASE + 'w300' + movie.poster_path) : null;
+    let director = '';
+    try{ director = await fetchDirector(movie.id); }catch(e){}
+    let wiki = await fetchWikipedia(movie.title).catch(()=> null);
+    if(!wiki) wiki = autoWiki(movie.title);
+    return { director, year, poster, wiki, title: movie.title || title };
+  }catch(e){ console.error('fetchTMDBDetailsByTitle', e); return null; }
+}
+
+/* Wikipedia opensearch to find a probable FR wiki page */
+async function fetchWikipedia(title){
+  if(!title) return '';
+  try{
+    const url = `https://fr.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(title)}&limit=1&namespace=0&format=json&origin=*`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if(Array.isArray(j) && j[3] && j[3][0]) return j[3][0];
+  }catch(e){ console.error('fetchWikipedia', e); }
+  return '';
+}
+</script>
+</body>
+</html>
