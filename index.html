@@ -117,229 +117,85 @@ select option{ background: #08101a; color: #eef6ff; }
 }
 .star.animate{animation:star-pop .3s ease}
 
-/* Responsive - Tablet */
+/* Responsive */
 @media(max-width:900px){
   .tabs{overflow:auto;white-space:nowrap}
   .carousel-track img{height:120px}
   .floating-counter{right:8px;left:auto;top:8px;padding:6px}
 }
 
-/* Responsive - Mobile */
+/* Tablet: make layout more compact */
 @media(max-width:768px){
   body{padding:8px}
+  .container{max-width:100%}
   
-  /* Header and navigation */
-  header{flex-direction:column;align-items:stretch;gap:8px;padding:8px 0}
-  .logo{font-size:16px;text-align:center}
+  /* Header - more compact */
+  header{flex-wrap:wrap;gap:8px;padding:8px 0}
+  .logo{font-size:16px}
+  .tabs{flex:1 1 100%;order:3;gap:6px;margin-left:0}
+  .tab-btn{padding:6px 10px;font-size:13px}
+  .header-right{gap:6px}
+  .button{padding:6px 10px;font-size:13px}
   
-  /* Tab buttons - make them visible and scrollable */
-  .tabs{
-    display:flex;
-    gap:6px;
-    margin-left:0;
-    overflow-x:auto;
-    overflow-y:hidden;
-    white-space:nowrap;
-    padding:4px 0;
-    scrollbar-width:thin;
-  }
-  .tab-btn{
-    font-size:13px;
-    padding:6px 10px;
-    flex-shrink:0;
-    min-width:auto
-  }
-  
-  /* Header buttons */
-  .header-right{
-    margin-left:0;
-    flex-direction:row;
-    justify-content:center;
-    flex-wrap:wrap;
-    gap:6px
-  }
-  .header-right .button{
-    font-size:13px;
-    padding:6px 10px;
-    flex:1;
-    min-width:auto
-  }
-  
-  /* Floating counter - make it more compact */
-  .floating-counter{
-    position:fixed;
-    right:4px;
-    top:4px;
-    padding:4px 8px;
-    font-size:12px;
-    gap:6px;
-    max-width:calc(100vw - 8px);
-    flex-wrap:wrap
-  }
+  /* Floating counter - more compact */
+  .floating-counter{padding:6px 8px;font-size:13px}
   .floating-counter .small{font-size:11px}
-  .floating-counter button{
-    font-size:11px;
-    padding:4px 8px
-  }
+  .floating-counter button{padding:4px 8px;font-size:12px}
   
-  /* Content sections */
+  /* Content - more compact */
   .content{padding:12px;margin-top:8px}
-  .section{margin:10px 0;padding:10px;overflow:hidden}
-  .section-head{flex-direction:column;align-items:stretch;gap:8px}
-  .section-info{flex-direction:column;align-items:flex-start;gap:4px}
+  .section{margin:10px 0;padding:10px}
   .section-title{font-size:16px}
   .section-meta{font-size:12px}
   
-  /* Film rows - horizontal layout, poster left, title middle, actions right */
-  .film{
-    gap:4px;
-    padding:6px;
-    align-items:flex-start;
-    max-width:100%
-  }
-  .film img{
-    width:50px;
-    height:auto;
-    flex-shrink:0
-  }
-  .poster-mid{width:65px}
-  .num{
-    min-width:18px;
-    text-align:right;
-    font-size:12px;
-    flex-shrink:0;
-    padding-top:2px
-  }
-  .film input[type="checkbox"]{
-    flex-shrink:0
-  }
+  /* Film rows - smaller but keep layout */
+  .film{padding:6px;gap:5px}
+  .film img{width:50px}
+  .poster-mid{width:80px}
+  .num{min-width:28px;font-size:14px}
+  .title{font-size:14px}
+  .meta{font-size:12px}
+  .actions{gap:6px}
+  .action-btn,.action-delete{padding:5px 8px;font-size:13px}
   
-  /* Title and director - should grow to fill available space */
-  .title{
-    font-size:12px;
-    line-height:1.3;
-    margin-bottom:2px;
-    overflow-wrap:break-word;
-    word-break:break-word
-  }
-  .meta{
-    font-size:10px;
-    line-height:1.2;
-    color:var(--muted);
-    overflow-wrap:break-word;
-    word-break:break-word
-  }
+  /* Forms - full width for easier touch */
+  input, input[type=text], select, input[type=date]{font-size:14px;padding:6px}
+  .inline-form{flex-direction:column;gap:6px}
+  .inline-form input, .inline-form button{width:100%}
+  .add-form{gap:6px}
+  .add-form input, .add-form select, .add-form button{width:100%;font-size:14px;padding:6px}
   
-  /* Actions - compact and on the right */
-  .actions{
-    gap:2px;
-    flex-shrink:0;
-    margin-left:auto
-  }
-  .actions a{
-    font-size:10px;
-    padding:2px 4px
-  }
-  .action-btn,.action-delete{
-    font-size:16px;
-    padding:2px 4px;
-    line-height:1
-  }
-  
-  /* Buttons */
-  .button{
-    font-size:13px;
-    padding:6px 10px
-  }
-  
-  /* Forms */
-  input, input[type=text], select, input[type=date]{
-    font-size:14px;
-    padding:6px;
-    min-width:100%;
-    width:100%;
-  }
-  
-  .inline-form{
-    flex-direction:column;
-    align-items:stretch;
-    gap:6px
-  }
-  .inline-form input{width:100%}
-  .inline-form button{width:100%}
-  
-  .add-form{
-    display:flex;
-    flex-direction:column;
-    gap:6px
-  }
-  .add-form input,.add-form select,.add-form button{width:100%}
-  
-  /* Search row */
-  .row{
-    display:flex;
-    flex-direction:column;
-    gap:6px
-  }
-  .row input,.row button,.row select{width:100%}
+  /* Stars - slightly smaller but still touch-friendly */
+  .star{font-size:20px}
   
   /* Carousel */
-  .carousel-wrap{height:150px;margin-top:8px}
-  .carousel-track{padding:8px}
   .carousel-track img{height:100px}
-  
-  /* Star rating - make it more touch-friendly */
-  .star-rating{gap:4px}
-  .star{width:24px;height:24px}
-  
-  /* Wiki links */
-  .wiki-link{
-    font-size:12px;
-    padding:4px 8px
-  }
-  
-  /* TMDB specific */
-  #tmdb-list, #tmdb-all-container, #tmdb-watched-container{
-    font-size:14px
-  }
-  
-  /* Global add film section */
-  #global-add-film{padding:12px}
-  #global-add-film h3{font-size:16px}
 }
 
-/* Extra small mobile devices */
+/* Mobile: even more compact */
 @media(max-width:480px){
-  body{padding:4px}
+  body{padding:6px}
+  
   .logo{font-size:14px}
-  .tab-btn{font-size:12px;padding:4px 8px}
+  .tab-btn{padding:5px 8px;font-size:12px}
+  .button{padding:5px 8px;font-size:12px}
   
-  .floating-counter{
-    padding:3px 6px;
-    font-size:11px
-  }
-  .floating-counter .small{font-size:10px}
-  .floating-counter button{
-    font-size:10px;
-    padding:3px 6px
-  }
-  
+  .section{padding:8px;margin:8px 0}
   .section-title{font-size:14px}
   .section-meta{font-size:11px}
   
-  /* Even smaller poster and tighter layout for small screens */
-  .film{gap:6px;padding:6px}
+  .film{padding:5px;gap:4px}
   .film img{width:40px}
   .poster-mid{width:60px}
-  .num{min-width:20px;font-size:12px}
+  .num{min-width:24px;font-size:13px}
   .title{font-size:13px}
-  .meta{font-size:10px}
-  .actions{gap:3px}
+  .meta{font-size:11px}
+  .actions{gap:4px}
+  .action-btn,.action-delete{padding:4px 6px;font-size:12px}
   
-  .carousel-wrap{height:120px}
+  input, input[type=text], select, input[type=date]{font-size:13px;padding:5px}
+  .star{font-size:18px}
   .carousel-track img{height:80px}
-  
-  .star{width:20px;height:20px}
 }
 </style>
 </head>
