@@ -103,9 +103,9 @@ select option{ background: #08101a; color: #eef6ff; }
 /* Star Rating System */
 .star-rating{display:inline-flex;align-items:center;gap:2px;margin-left:12px;cursor:pointer;user-select:none}
 .star{position:relative;width:20px;height:20px;display:inline-block;transition:transform .12s ease}
-.star svg{width:100%;height:100%;fill:#556;stroke:#778;stroke-width:0.5}
-.star.filled svg{fill:#ffd700;stroke:#ffb700;stroke-width:0.5}
-.star.half-filled svg{fill:url(#half-gradient);stroke:#ffb700;stroke-width:0.5}
+.star svg{width:100%;height:100%;fill:transparent;stroke:#ffd700;stroke-width:1.5}
+.star.filled svg{fill:#ffd700;stroke:#ffb700;stroke-width:1.5}
+.star.half-filled svg{fill:url(#half-gradient);stroke:#ffb700;stroke-width:1.5}
 .star:hover{transform:scale(1.15)}
 .star-rating:active .star{transform:scale(0.95)}
 
@@ -126,7 +126,7 @@ select option{ background: #08101a; color: #eef6ff; }
   <defs>
     <linearGradient id="half-gradient">
       <stop offset="50%" stop-color="#ffd700"/>
-      <stop offset="50%" stop-color="#556"/>
+      <stop offset="50%" stop-color="transparent"/>
     </linearGradient>
   </defs>
 </svg>
@@ -253,7 +253,7 @@ const qsa = s => Array.from(document.querySelectorAll(s));
 function createStarRating(currentRating, onChange){
   const container = el('div', 'star-rating');
   const stars = [];
-  let isLocked = false; // Track if rating is locked after click
+  let lockedRating = currentRating || 0; // Track the locked rating value
   
   // Create 5 stars
   for(let i = 0; i < 5; i++){
@@ -278,7 +278,7 @@ function createStarRating(currentRating, onChange){
     });
   }
   
-  updateStars(currentRating || 0);
+  updateStars(lockedRating);
   
   // Click to set rating with half-star support
   stars.forEach((star, index) => {
@@ -290,8 +290,7 @@ function createStarRating(currentRating, onChange){
       const newRating = index + (isLeftHalf ? 0.5 : 1);
       
       // Lock the rating after click
-      isLocked = true;
-      currentRating = newRating;
+      lockedRating = newRating;
       
       // Animate the clicked star
       star.classList.add('animate');
@@ -300,55 +299,45 @@ function createStarRating(currentRating, onChange){
       updateStars(newRating);
       if(onChange) onChange(newRating);
     });
-    
-    // Hover preview (only when not locked)
-    star.addEventListener('mouseenter', (e) => {
-      if(!isLocked){
-        const rect = star.getBoundingClientRect();
-        // Get mouse position to show half or full preview
-        const mouseX = e.clientX - rect.left;
-        const isLeftHalf = mouseX < rect.width / 2;
-        const previewRating = index + (isLeftHalf ? 0.5 : 1);
-        
-        // Update display for preview
-        stars.forEach((s, i) => {
-          s.classList.remove('filled', 'half-filled');
-          if(i < index){
-            s.classList.add('filled');
-          } else if(i === index){
-            if(isLeftHalf){
-              s.classList.add('half-filled');
-            } else {
-              s.classList.add('filled');
-            }
-          }
-        });
-      }
-    });
-    
-    // Track mouse movement within star for dynamic half-star preview
-    star.addEventListener('mousemove', (e) => {
-      if(!isLocked){
-        const rect = star.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const isLeftHalf = mouseX < rect.width / 2;
-        
-        // Update only the current star's half/full state
-        star.classList.remove('filled', 'half-filled');
-        if(isLeftHalf){
-          star.classList.add('half-filled');
-        } else {
-          star.classList.add('filled');
-        }
-      }
-    });
   });
   
-  // Mouse leave container to restore original state (only when not locked)
-  container.addEventListener('mouseleave', () => {
-    if(!isLocked){
-      updateStars(currentRating || 0);
+  // Mouse tracking for preview - works on the entire container
+  container.addEventListener('mousemove', (e) => {
+    // Find which star we're hovering over
+    let hoveredStarIndex = -1;
+    let isLeftHalf = false;
+    
+    for(let i = 0; i < stars.length; i++){
+      const rect = stars[i].getBoundingClientRect();
+      if(e.clientX >= rect.left && e.clientX <= rect.right &&
+         e.clientY >= rect.top && e.clientY <= rect.bottom){
+        hoveredStarIndex = i;
+        const x = e.clientX - rect.left;
+        isLeftHalf = x < rect.width / 2;
+        break;
+      }
     }
+    
+    if(hoveredStarIndex >= 0){
+      // Show preview
+      stars.forEach((s, i) => {
+        s.classList.remove('filled', 'half-filled');
+        if(i < hoveredStarIndex){
+          s.classList.add('filled');
+        } else if(i === hoveredStarIndex){
+          if(isLeftHalf){
+            s.classList.add('half-filled');
+          } else {
+            s.classList.add('filled');
+          }
+        }
+      });
+    }
+  });
+  
+  // Mouse leave container to restore locked state
+  container.addEventListener('mouseleave', () => {
+    updateStars(lockedRating);
   });
   
   return container;
