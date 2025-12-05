@@ -126,76 +126,78 @@ select option{ background: #08101a; color: #eef6ff; }
 
 /* Tablet: make layout more compact */
 @media(max-width:768px){
-  body{padding:6px}
+  body{padding:5px}
   .container{max-width:100%;padding:0}
   
   /* Header - more compact */
-  header{flex-wrap:wrap;gap:6px;padding:6px 0}
-  .logo{font-size:15px}
-  .tabs{flex:1 1 100%;order:3;gap:5px;margin-left:0}
-  .tab-btn{padding:5px 8px;font-size:12px}
-  .header-right{gap:5px}
-  .button{padding:5px 8px;font-size:12px}
+  header{flex-wrap:wrap;gap:5px;padding:5px 0}
+  .logo{font-size:14px}
+  .tabs{flex:1 1 100%;order:3;gap:4px;margin-left:0}
+  .tab-btn{padding:4px 7px;font-size:11px}
+  .header-right{gap:4px}
+  .button{padding:4px 7px;font-size:11px}
   
   /* Floating counter - more compact */
-  .floating-counter{padding:5px 7px;font-size:12px}
-  .floating-counter .small{font-size:10px}
-  .floating-counter button{padding:4px 7px;font-size:11px}
+  .floating-counter{padding:4px 6px;font-size:11px;right:5px;top:5px}
+  .floating-counter .small{font-size:9px}
+  .floating-counter button{padding:3px 6px;font-size:10px}
   
   /* Content - more compact */
-  .content{padding:10px;margin-top:6px}
-  .section{margin:8px 0;padding:8px}
-  .section-title{font-size:15px}
-  .section-meta{font-size:11px}
-  
-  /* Film rows - smaller but keep layout */
-  .film{padding:4px;gap:4px}
-  .film img{width:45px}
-  .poster-mid{width:70px}
-  .num{min-width:24px;font-size:13px}
-  .title{font-size:13px}
-  .meta{font-size:11px}
-  .actions{gap:4px}
-  .action-btn,.action-delete{padding:4px 6px;font-size:11px}
-  
-  /* Forms - full width for easier touch */
-  input, input[type=text], select, input[type=date]{font-size:13px;padding:5px}
-  .inline-form{flex-direction:column;gap:5px}
-  .inline-form input, .inline-form button{width:100%}
-  .add-form{gap:5px}
-  .add-form input, .add-form select, .add-form button{width:100%;font-size:13px;padding:5px}
-  
-  /* Stars - slightly smaller but still touch-friendly */
-  .star{font-size:18px}
-  
-  /* Carousel */
-  .carousel-track img{height:90px}
-}
-
-/* Mobile: even more compact */
-@media(max-width:480px){
-  body{padding:4px}
-  
-  .logo{font-size:13px}
-  .tab-btn{padding:4px 6px;font-size:11px}
-  .button{padding:4px 6px;font-size:11px}
-  
-  .section{padding:6px;margin:6px 0}
-  .section-title{font-size:13px}
+  .content{padding:8px;margin-top:5px}
+  .section{margin:6px 0;padding:6px}
+  .section-title{font-size:14px}
   .section-meta{font-size:10px}
   
+  /* Film rows - smaller, compact checkboxes */
   .film{padding:3px;gap:3px}
-  .film img{width:35px}
-  .poster-mid{width:50px}
-  .num{min-width:20px;font-size:12px}
+  .film input[type=checkbox]{width:14px;height:14px;margin:0;flex-shrink:0}
+  .film img{width:40px}
+  .poster-mid{width:65px}
+  .num{min-width:20px;font-size:12px;margin-right:0}
   .title{font-size:12px}
   .meta{font-size:10px}
   .actions{gap:3px}
   .action-btn,.action-delete{padding:3px 5px;font-size:10px}
   
+  /* Forms - full width for easier touch */
   input, input[type=text], select, input[type=date]{font-size:12px;padding:4px}
+  .inline-form{flex-direction:column;gap:4px}
+  .inline-form input, .inline-form button{width:100%}
+  .add-form{gap:4px}
+  .add-form input, .add-form select, .add-form button{width:100%;font-size:12px;padding:4px}
+  
+  /* Stars - slightly smaller but still touch-friendly */
   .star{font-size:16px}
-  .carousel-track img{height:70px}
+  
+  /* Carousel */
+  .carousel-track img{height:80px}
+}
+
+/* Mobile: even more compact */
+@media(max-width:480px){
+  body{padding:3px}
+  
+  .logo{font-size:12px}
+  .tab-btn{padding:3px 5px;font-size:10px}
+  .button{padding:3px 5px;font-size:10px}
+  
+  .section{padding:4px;margin:4px 0}
+  .section-title{font-size:12px}
+  .section-meta{font-size:9px}
+  
+  .film{padding:2px;gap:2px}
+  .film input[type=checkbox]{width:12px;height:12px;margin:0;flex-shrink:0}
+  .film img{width:32px}
+  .poster-mid{width:48px}
+  .num{min-width:18px;font-size:11px;margin-right:0}
+  .title{font-size:11px}
+  .meta{font-size:9px}
+  .actions{gap:2px}
+  .action-btn,.action-delete{padding:2px 4px;font-size:9px}
+  
+  input, input[type=text], select, input[type=date]{font-size:11px;padding:3px}
+  .star{font-size:14px}
+  .carousel-track img{height:60px}
 }
 </style>
 </head>
