@@ -1968,7 +1968,8 @@ function buildCarousel(){
   carouselTrack.innerHTML = '';
   const posters = tmdbMovies.filter(m=>m.poster_path).map(m=> TMDB_IMAGE_BASE + 'w500' + m.poster_path);
   let items = posters.slice();
-  if(items.length < 6) items = items.concat(items);
+  // Duplicate images twice for seamless infinite scrolling
+  items = items.concat(items);
   items.forEach(src=>{ const img=document.createElement('img'); img.src = src; carouselTrack.appendChild(img); });
   if(posters[0]) carouselBg.style.backgroundImage = `url(${posters[0]})`;
   startCarousel();
@@ -1977,12 +1978,20 @@ function startCarousel(){
   const wrap = document.getElementById('carousel-wrap');
   const track = document.getElementById('carousel-track');
   if(!wrap||!track) return;
-  wrap.scrollLeft = 0;
   if(carouselRAF) cancelAnimationFrame(carouselRAF);
+  let offset = 0;
   const speed = 0.35;
-  function step(){ wrap.scrollLeft += speed; if(wrap.scrollLeft + wrap.clientWidth >= track.scrollWidth - 1) wrap.scrollLeft = 0; carouselRAF = requestAnimationFrame(step); }
+  function step(){
+    offset -= speed;
+    // When fully scrolled past first set of images, reset to create infinite loop
+    if(Math.abs(offset) >= track.scrollWidth / 2){
+      offset = 0;
+    }
+    track.style.transform = `translateX(${offset}px)`;
+    carouselRAF = requestAnimationFrame(step);
+  }
   wrap.onmouseenter = ()=>{ if(carouselRAF) cancelAnimationFrame(carouselRAF); };
-  wrap.onmouseleave = ()=>{ carouselRAF = requestAnimationFrame(step); };
+  wrap.onmouseleave = ()=>{ offset = parseFloat(track.style.transform.replace(/[^\d.-]/g, '') || 0); carouselRAF = requestAnimationFrame(step); };
   carouselRAF = requestAnimationFrame(step);
 }
 
