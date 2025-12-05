@@ -117,8 +117,199 @@ select option{ background: #08101a; color: #eef6ff; }
 }
 .star.animate{animation:star-pop .3s ease}
 
-/* Responsive */
-@media(max-width:900px){.tabs{overflow:auto}.carousel-track img{height:120px}.floating-counter{right:8px;left:auto;top:8px;padding:6px}}
+/* Responsive - Tablet */
+@media(max-width:900px){
+  .tabs{overflow:auto;white-space:nowrap}
+  .carousel-track img{height:120px}
+  .floating-counter{right:8px;left:auto;top:8px;padding:6px}
+}
+
+/* Responsive - Mobile */
+@media(max-width:768px){
+  body{padding:8px}
+  
+  /* Header and navigation */
+  header{flex-direction:column;align-items:stretch;gap:8px;padding:8px 0}
+  .logo{font-size:16px;text-align:center}
+  
+  /* Tab buttons - make them visible and scrollable */
+  .tabs{
+    display:flex;
+    gap:6px;
+    margin-left:0;
+    overflow-x:auto;
+    overflow-y:hidden;
+    white-space:nowrap;
+    padding:4px 0;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin
+  }
+  .tab-btn{
+    font-size:13px;
+    padding:6px 10px;
+    flex-shrink:0;
+    min-width:auto
+  }
+  
+  /* Header buttons */
+  .header-right{
+    margin-left:0;
+    flex-direction:row;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:6px
+  }
+  .header-right .button{
+    font-size:13px;
+    padding:6px 10px;
+    flex:1;
+    min-width:auto
+  }
+  
+  /* Floating counter - make it more compact */
+  .floating-counter{
+    position:fixed;
+    right:4px;
+    top:4px;
+    padding:4px 8px;
+    font-size:12px;
+    gap:6px;
+    max-width:calc(100vw - 8px);
+    flex-wrap:wrap
+  }
+  .floating-counter .small{font-size:11px}
+  .floating-counter button{
+    font-size:11px;
+    padding:4px 8px
+  }
+  
+  /* Content sections */
+  .content{padding:12px;margin-top:8px}
+  .section{margin:10px 0;padding:10px}
+  .section-head{flex-direction:column;align-items:stretch;gap:8px}
+  .section-info{flex-direction:column;align-items:flex-start;gap:4px}
+  .section-title{font-size:16px}
+  .section-meta{font-size:12px}
+  
+  /* Film rows */
+  .film{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    padding:10px
+  }
+  .film img{
+    width:100%;
+    max-width:200px;
+    height:auto;
+    align-self:center
+  }
+  .poster-mid{width:100%;max-width:150px}
+  .num{
+    min-width:auto;
+    text-align:left;
+    font-size:14px;
+    align-self:flex-start
+  }
+  .title{font-size:15px}
+  .meta{font-size:12px}
+  
+  /* Actions */
+  .actions{
+    margin-left:0;
+    width:100%;
+    justify-content:flex-start;
+    flex-wrap:wrap
+  }
+  
+  /* Buttons */
+  .button,.action-btn,.action-delete{
+    font-size:13px;
+    padding:6px 10px
+  }
+  
+  /* Forms */
+  input[type=text], select, input[type=date], input{
+    font-size:14px;
+    padding:6px;
+    min-width:100%;
+    width:100%
+  }
+  
+  .inline-form{
+    flex-direction:column;
+    align-items:stretch;
+    gap:6px
+  }
+  .inline-form input{width:100%}
+  .inline-form button{width:100%}
+  
+  .add-form{
+    display:flex;
+    flex-direction:column;
+    gap:6px
+  }
+  .add-form input,.add-form select,.add-form button{width:100%}
+  
+  /* Search row */
+  .row{
+    display:flex;
+    flex-direction:column;
+    gap:6px
+  }
+  .row input,.row button,.row select{width:100%}
+  
+  /* Carousel */
+  .carousel-wrap{height:150px;margin-top:8px}
+  .carousel-track{padding:8px}
+  .carousel-track img{height:100px}
+  
+  /* Star rating - make it more touch-friendly */
+  .star-rating{gap:4px}
+  .star{width:24px;height:24px}
+  
+  /* Wiki links */
+  .wiki-link{
+    font-size:12px;
+    padding:4px 8px
+  }
+  
+  /* TMDB specific */
+  #tmdb-list, #tmdb-all-container, #tmdb-watched-container{
+    font-size:14px
+  }
+  
+  /* Global add film section */
+  #global-add-film{padding:12px}
+  #global-add-film h3{font-size:16px}
+}
+
+/* Extra small mobile devices */
+@media(max-width:480px){
+  body{padding:4px}
+  .logo{font-size:14px}
+  .tab-btn{font-size:12px;padding:4px 8px}
+  
+  .floating-counter{
+    padding:3px 6px;
+    font-size:11px
+  }
+  .floating-counter .small{font-size:10px}
+  .floating-counter button{
+    font-size:10px;
+    padding:3px 6px
+  }
+  
+  .section-title{font-size:14px}
+  .section-meta{font-size:11px}
+  .title{font-size:14px}
+  .meta{font-size:11px}
+  
+  .carousel-wrap{height:120px}
+  .carousel-track img{height:80px}
+  
+  .star{width:20px;height:20px}
+}
 </style>
 </head>
 <body>
