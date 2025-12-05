@@ -98,11 +98,36 @@ select option{ background: #08101a; color: #eef6ff; }
 .checked-pop { animation:pop-check .22s cubic-bezier(.2,.9,.3,1); }
 @keyframes pop-check{0%{transform:scale(1);opacity:1}45%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}
 
+/* Star Rating System */
+.star-rating{display:inline-flex;align-items:center;gap:2px;margin-left:12px;cursor:pointer;user-select:none}
+.star{position:relative;width:20px;height:20px;display:inline-block;transition:transform .12s ease}
+.star svg{width:100%;height:100%;fill:#333}
+.star.filled svg{fill:#ffd700}
+.star.half-filled svg{fill:url(#half-gradient)}
+.star:hover{transform:scale(1.15)}
+.star-rating:active .star{transform:scale(0.95)}
+
+/* Star animation on selection */
+@keyframes star-pop{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.3)}
+  100%{transform:scale(1)}
+}
+.star.animate{animation:star-pop .3s ease}
+
 /* Responsive */
 @media(max-width:900px){.tabs{overflow:auto}.carousel-track img{height:120px}.floating-counter{right:8px;left:auto;top:8px;padding:6px}}
 </style>
 </head>
 <body>
+<svg style="display:none">
+  <defs>
+    <linearGradient id="half-gradient">
+      <stop offset="50%" stop-color="#ffd700"/>
+      <stop offset="50%" stop-color="#333"/>
+    </linearGradient>
+  </defs>
+</svg>
 <div class="container">
   <header>
     <div class="logo">🎬 Marathon Cinéphile</div>
@@ -221,6 +246,111 @@ const STORAGE_KEY = 'marathon_cine_v2';
 const el = (t, c, txt) => { const e=document.createElement(t); if(c) e.className=c; if(typeof txt!=='undefined') e.textContent=txt; return e; };
 const qs = s => document.querySelector(s);
 const qsa = s => Array.from(document.querySelectorAll(s));
+
+/* Star Rating Component */
+function createStarRating(currentRating, onChange){
+  const container = el('div', 'star-rating');
+  const stars = [];
+  
+  // Create 5 stars
+  for(let i = 0; i < 5; i++){
+    const star = el('span', 'star');
+    star.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+    stars.push(star);
+    container.appendChild(star);
+  }
+  
+  // Update star display based on rating
+  function updateStars(rating){
+    const fullStars = Math.floor(rating);
+    const hasHalf = (rating % 1) >= 0.5;
+    
+    stars.forEach((star, i) => {
+      star.classList.remove('filled', 'half-filled', 'animate');
+      if(i < fullStars){
+        star.classList.add('filled');
+      } else if(i === fullStars && hasHalf){
+        star.classList.add('half-filled');
+      }
+    });
+  }
+  
+  updateStars(currentRating || 0);
+  
+  // Click/hold interaction
+  let isHolding = false;
+  let holdInterval = null;
+  
+  stars.forEach((star, index) => {
+    // Click to set rating
+    star.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const rect = star.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const isLeftHalf = x < rect.width / 2;
+      const newRating = index + (isLeftHalf ? 0.5 : 1);
+      
+      // Animate the clicked star
+      star.classList.add('animate');
+      setTimeout(() => star.classList.remove('animate'), 300);
+      
+      updateStars(newRating);
+      if(onChange) onChange(newRating);
+    });
+    
+    // Mouse down to start holding
+    star.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      isHolding = true;
+      
+      holdInterval = setInterval(() => {
+        if(isHolding){
+          const rect = star.getBoundingClientRect();
+          // For hold, we'll use full stars
+          const newRating = index + 1;
+          updateStars(newRating);
+          if(onChange) onChange(newRating);
+        }
+      }, 100);
+    });
+    
+    // Hover preview
+    star.addEventListener('mouseenter', (e) => {
+      if(!isHolding){
+        const rect = star.getBoundingClientRect();
+        // Show preview when hovering
+        const fullStars = Math.floor(currentRating || 0);
+        const hasHalf = ((currentRating || 0) % 1) >= 0.5;
+        
+        stars.forEach((s, i) => {
+          if(i <= index){
+            s.querySelector('svg').style.fill = '#ffd700';
+          } else {
+            s.querySelector('svg').style.fill = '#333';
+          }
+        });
+      }
+    });
+  });
+  
+  // Mouse up to stop holding
+  document.addEventListener('mouseup', () => {
+    if(isHolding){
+      isHolding = false;
+      if(holdInterval){
+        clearInterval(holdInterval);
+        holdInterval = null;
+      }
+    }
+  });
+  
+  // Mouse leave container to restore original state
+  container.addEventListener('mouseleave', () => {
+    updateStars(currentRating || 0);
+  });
+  
+  return container;
+}
 
 /* Initial data */
 let initialSections = [
@@ -1224,8 +1354,94 @@ let tmdbMovies = [], tmdbDisplayed = [], currentTmdbSource = 'all', carouselRAF 
 
 /* Save / export / import */
 function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(filmsData)); updateCounters(); }
-exportBtn.addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify(filmsData,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='marathon_export.json'; a.click(); });
-importFile.addEventListener('change', (ev)=>{ const f = ev.target.files && ev.target.files[0]; if(!f) return; const r=new FileReader(); r.onload = ()=>{ try{ const j = JSON.parse(r.result); if(Array.isArray(j)){ filmsData=j; saveData(); renderAll(); renderSeen(); renderManage(); populateSectionSelects(); alert('Import OK'); } else alert('Format JSON non reconnu'); } catch(e){ alert('Erreur JSON'); } ev.target.value=''; }; r.readAsText(f); });
+
+exportBtn.addEventListener('click', ()=>{ 
+  // Collect TMDB films from localStorage
+  const tmdbFilms = [];
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith('tmdb_')){
+      try{
+        const v = JSON.parse(localStorage.getItem(k));
+        if(v) {
+          // Add the ID from the key if not already present
+          if(!v.id) v.id = k.replace('tmdb_', '');
+          tmdbFilms.push(v);
+        }
+      }catch(e){}
+    }
+  }
+  
+  // Create export object with both section films and TMDB films
+  const exportData = {
+    sections: filmsData,
+    tmdbFilms: tmdbFilms
+  };
+  
+  const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}); 
+  const a=document.createElement('a'); 
+  a.href=URL.createObjectURL(blob); 
+  a.download='marathon_export.json'; 
+  a.click(); 
+});
+
+importFile.addEventListener('change', (ev)=>{ 
+  const f = ev.target.files && ev.target.files[0]; 
+  if(!f) return; 
+  const r=new FileReader(); 
+  r.onload = ()=>{ 
+    try{ 
+      const j = JSON.parse(r.result); 
+      
+      // Handle new format (with sections and tmdbFilms)
+      if(j.sections && Array.isArray(j.sections)){
+        filmsData = j.sections;
+        
+        // Clear existing TMDB entries
+        const keysToRemove = [];
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(k && k.startsWith('tmdb_')) keysToRemove.push(k);
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        
+        // Restore TMDB films
+        if(j.tmdbFilms && Array.isArray(j.tmdbFilms)){
+          j.tmdbFilms.forEach(film => {
+            if(film.id || film.title){
+              const key = 'tmdb_' + (film.id || btoa(film.title).substring(0,20));
+              localStorage.setItem(key, JSON.stringify(film));
+            }
+          });
+        }
+        
+        saveData(); 
+        renderAll(); 
+        renderSeen(); 
+        renderManage(); 
+        populateSectionSelects(); 
+        alert('Import OK'); 
+      } 
+      // Handle legacy format (just array of sections)
+      else if(Array.isArray(j)){ 
+        filmsData=j; 
+        saveData(); 
+        renderAll(); 
+        renderSeen(); 
+        renderManage(); 
+        populateSectionSelects(); 
+        alert('Import OK (format ancien - films TMDB non inclus)'); 
+      } 
+      else {
+        alert('Format JSON non reconnu'); 
+      }
+    } catch(e){ 
+      alert('Erreur JSON'); 
+    } 
+    ev.target.value=''; 
+  }; 
+  r.readAsText(f); 
+});
 
 /* ========================= COUNTER (fixed + animation) ========================= */
 /* previous values to detect changes */
@@ -1447,14 +1663,14 @@ function openInlineAdd(wrap, si){
 /* Render Seen */
 function renderSeen(){
   const list = [];
-  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section'}); }); });
+  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section', rating: f.rating || 0, filmObj: f}); }); });
   // TMDB seen
   for(let i=0;i<localStorage.length;i++){
     const k = localStorage.key(i);
     if(k && k.startsWith('tmdb_')){
       try{
         const v = JSON.parse(localStorage.getItem(k));
-        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_','') });
+        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_',''), rating: v.rating || 0, tmdbKey: k });
       }catch(e){}
     }
   }
@@ -1482,10 +1698,33 @@ function renderSeen(){
     });
     const img = el('img'); if(it.poster){ img.src = it.poster; img.style.width='48px'; } else img.style.display='none';
     const info = el('div');
+    const titleRow = el('div'); titleRow.style.display='flex'; titleRow.style.alignItems='center';
     const t = el('div','title', it.title + (it.year? ' ('+it.year+')':'' ));
+    
+    // Add star rating next to title
+    const starRating = createStarRating(it.rating || 0, (newRating) => {
+      // Save the new rating
+      if(it.source === 'tmdb'){
+        try{
+          const v = JSON.parse(localStorage.getItem(it.tmdbKey) || '{}');
+          v.rating = newRating;
+          localStorage.setItem(it.tmdbKey, JSON.stringify(v));
+        }catch(e){}
+      } else {
+        // Update in filmsData
+        if(it.filmObj){
+          it.filmObj.rating = newRating;
+          saveData();
+        }
+      }
+    });
+    
+    titleRow.appendChild(t);
+    titleRow.appendChild(starRating);
+    
     const s = el('div','small', it.section || '');
     if(it.director) { const d = el('div','meta', it.director); info.appendChild(d); }
-    info.appendChild(t); info.appendChild(s);
+    info.appendChild(titleRow); info.appendChild(s);
     row.appendChild(n); row.appendChild(cb); row.appendChild(img); row.appendChild(info);
     seenEl.appendChild(row);
   });
@@ -1632,9 +1871,9 @@ function displayTMDB(list){
     cb.addEventListener('change', async ()=>{
       if(cb.checked){
         const key = 'tmdb_' + m.id;
-        const obj = { title: m.title || '', poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, release_date: m.release_date || '', source: m._source || '', seen: true };
+        const obj = { id: m.id, title: m.title || '', poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, release_date: m.release_date || '', source: m._source || '', seen: true, rating: 0 };
         try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){}
-        fetchDirector(m.id).then(name=>{ if(name){ try{ const cur = JSON.parse(localStorage.getItem(key)||'{}'); cur.director = name; cur.seen = true; localStorage.setItem(key, JSON.stringify(cur)); }catch(e){} updateCounters(); renderSeen(); updateTmdbWatchedUI(); }});
+        fetchDirector(m.id).then(name=>{ if(name){ try{ const cur = JSON.parse(localStorage.getItem(key)||'{}'); cur.director = name; cur.seen = true; cur.rating = cur.rating || 0; localStorage.setItem(key, JSON.stringify(cur)); }catch(e){} updateCounters(); renderSeen(); updateTmdbWatchedUI(); }});
         updateCounters(); renderSeen(); updateTmdbWatchedUI();
       } else {
         // Option A: remove from localStorage entirely
