@@ -241,7 +241,6 @@ select option{ background: #08101a; color: #eef6ff; }
   <section id="all" class="content" data-tabcontent>
     <div class="row" style="margin-bottom:12px">
       <input id="all-search" type="text" placeholder="Rechercher un film, réalisateur ou section..." style="flex:1;min-width:220px">
-      <button id="all-search-btn" class="button">Rechercher</button>
       <button id="all-reset-btn" class="button">Réinitialiser</button>
     </div>
 
@@ -1657,13 +1656,28 @@ function renderAll(){
     head.appendChild(left); head.appendChild(right);
     wrap.appendChild(head);
 
-    filmsToShow.forEach((f, fi) => {
+    // Create a map from film to index for O(1) lookup
+    const filmToIndex = new Map();
+    sec.films.forEach((film, idx) => filmToIndex.set(film, idx));
+    
+    filmsToShow.forEach((f, localIndex) => {
+      // Find the actual index in the full films array
+      const actualFilmIndex = filmToIndex.get(f);
+      if (actualFilmIndex === undefined) return; // Safety check
+      
       const row = el('div','film');
       const num = el('div','num', globalIndex);
       const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!f.seen;
       cb.style.marginLeft='0';
       cb.addEventListener('change', () => {
-        filmsData[si].films[fi].seen = cb.checked;
+        filmsData[si].films[actualFilmIndex].seen = cb.checked;
+        // Add timestamp when marking as seen
+        if (cb.checked) {
+          filmsData[si].films[actualFilmIndex].seenDate = Date.now();
+        } else {
+          // Remove seenDate when unchecking
+          delete filmsData[si].films[actualFilmIndex].seenDate;
+        }
         saveData();
         row.classList.remove('checked-pop');
         void row.offsetWidth;
@@ -1675,7 +1689,7 @@ function renderAll(){
 
       const poster = el('img'); poster.style.width='64px';
       if(f.poster){ poster.src = f.poster; } else poster.style.display='none';
-      if(!f.poster && f.title){ fetchPosterForStatic(f.title, f.year).then(url=>{ if(url){ filmsData[si].films[fi].poster = url; saveData(); renderAll(); } }).catch(()=>{}); }
+      if(!f.poster && f.title){ fetchPosterForStatic(f.title, f.year).then(url=>{ if(url){ filmsData[si].films[actualFilmIndex].poster = url; saveData(); renderAll(); } }).catch(()=>{}); }
 
       const txt = el('div');
       const title = el('div','title', f.title + (f.year? ' ('+f.year+')':'' ));
@@ -1685,9 +1699,9 @@ function renderAll(){
       const actions = el('div','actions');
       if(f.wiki){ const a = el('a','wiki-link','Wiki'); a.href = f.wiki; a.target='_blank'; actions.appendChild(a); }
       const editBtn = el('button','action-btn','✏️'); editBtn.title='Modifier';
-      editBtn.addEventListener('click', ()=> editFilm(si, fi));
+      editBtn.addEventListener('click', ()=> editFilm(si, actualFilmIndex));
       const delBtn2 = el('button','action-delete','🗑️'); delBtn2.title='Supprimer';
-      delBtn2.addEventListener('click', ()=>{ if(confirm('Supprimer ce film ?')){ filmsData[si].films.splice(fi,1); saveData(); renderAll(); renderManage(); }});
+      delBtn2.addEventListener('click', ()=>{ if(confirm('Supprimer ce film ?')){ filmsData[si].films.splice(actualFilmIndex,1); saveData(); renderAll(); renderManage(); }});
       actions.appendChild(editBtn); actions.appendChild(delBtn2);
 
       row.appendChild(num);
@@ -1759,17 +1773,20 @@ function openInlineAdd(wrap, si){
 /* Render Seen */
 function renderSeen(){
   const list = [];
-  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section', rating: f.rating || 0, filmObj: f}); }); });
+  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section', rating: f.rating || 0, filmObj: f, seenDate: f.seenDate || 0}); }); });
   // TMDB seen
   for(let i=0;i<localStorage.length;i++){
     const k = localStorage.key(i);
     if(k && k.startsWith('tmdb_')){
       try{
         const v = JSON.parse(localStorage.getItem(k));
-        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_',''), rating: v.rating || 0, tmdbKey: k });
+        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_',''), rating: v.rating || 0, tmdbKey: k, seenDate: v.seenDate || 0 });
       }catch(e){}
     }
   }
+  
+  // Sort by seenDate ascending (oldest first = lowest number)
+  list.sort((a, b) => (a.seenDate || 0) - (b.seenDate || 0));
 
   seenEl.innerHTML = '';
   if(list.length === 0){ seenEl.textContent = '(Aucun film coché)'; return; }
@@ -1786,7 +1803,11 @@ function renderSeen(){
         // find and unmark in filmsData
         for(let si=0; si<filmsData.length; si++){
           const fidx = filmsData[si].films.findIndex(ff=> ff.title===it.title && (ff.year||'')=== (it.year||''));
-          if(fidx !== -1){ filmsData[si].films[fidx].seen = false; break; }
+          if(fidx !== -1){ 
+            filmsData[si].films[fidx].seen = false; 
+            delete filmsData[si].films[fidx].seenDate;
+            break; 
+          }
         }
         saveData();
       }
@@ -1965,11 +1986,34 @@ function displayTMDB(list){
     cb.checked = existing;
     cb.style.marginLeft='0';
     cb.addEventListener('change', async ()=>{
-      if(cb.checked){
+      if (cb.checked) {
         const key = 'tmdb_' + m.id;
-        const obj = { id: m.id, title: m.title || '', poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, release_date: m.release_date || '', source: m._source || '', seen: true, rating: 0 };
+        const obj = { 
+          id: m.id, 
+          title: m.title || '', 
+          poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, 
+          release_date: m.release_date || '', 
+          source: m._source || '', 
+          seen: true, 
+          rating: 0, 
+          seenDate: Date.now() 
+        };
         try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){}
-        fetchDirector(m.id).then(name=>{ if(name){ try{ const cur = JSON.parse(localStorage.getItem(key)||'{}'); cur.director = name; cur.seen = true; cur.rating = cur.rating || 0; localStorage.setItem(key, JSON.stringify(cur)); }catch(e){} updateCounters(); renderSeen(); updateTmdbWatchedUI(); }});
+        fetchDirector(m.id).then(name=>{
+          if(name){
+            try{
+              const cur = JSON.parse(localStorage.getItem(key)||'{}');
+              cur.director = name;
+              cur.seen = true;
+              cur.rating = cur.rating || 0;
+              cur.seenDate = cur.seenDate || Date.now();
+              localStorage.setItem(key, JSON.stringify(cur));
+            }catch(e){}
+            updateCounters();
+            renderSeen();
+            updateTmdbWatchedUI();
+          }
+        });
         updateCounters(); renderSeen(); updateTmdbWatchedUI();
       } else {
         // Option A: remove from localStorage entirely
@@ -2027,7 +2071,7 @@ function updateTmdbWatchedUI(){
       const addBtn = el('button','button','Ajouter à une section'); addBtn.style.marginLeft='6px';
       addBtn.addEventListener('click', ()=>{
         const idx = parseInt(sel.value,10);
-        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, seen: true };
+        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, seen: true, seenDate: v.seenDate || Date.now() };
         filmsData[idx].films.push(newFilm);
         saveData();
         updateCounters();
@@ -2107,10 +2151,9 @@ qsa('.tab-btn').forEach(btn => btn.addEventListener('click', ()=>{
   }
 }));
 
-/* All search */
-qs('#all-search-btn').addEventListener('click', ()=>{ allSearchQuery = qs('#all-search').value || ''; renderAll(); });
+/* All search - live search like TMDB */
+qs('#all-search').addEventListener('input', (e)=>{ allSearchQuery = e.target.value || ''; renderAll(); });
 qs('#all-reset-btn').addEventListener('click', ()=>{ allSearchQuery=''; qs('#all-search').value=''; renderAll(); });
-qs('#all-search').addEventListener('keyup', (e)=>{ if(e.key==='Enter'){ allSearchQuery = e.target.value; renderAll(); } });
 
 /* Manage create section */
 qs('#create-section')?.addEventListener('click', ()=>{ const n = addSectionInput.value.trim(); if(!n){ alert('Nom requis'); return; } filmsData.push({ section: n, color: randomColor(), films: [] }); saveData(); renderAll(); renderManage(); populateSectionSelects(); addSectionInput.value=''; });
