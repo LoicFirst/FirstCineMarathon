@@ -1664,6 +1664,13 @@ function renderAll(){
       cb.style.marginLeft='0';
       cb.addEventListener('change', () => {
         filmsData[si].films[fi].seen = cb.checked;
+        // Add timestamp when marking as seen
+        if(cb.checked){
+          filmsData[si].films[fi].seenDate = Date.now();
+        } else {
+          // Remove seenDate when unchecking
+          delete filmsData[si].films[fi].seenDate;
+        }
         saveData();
         row.classList.remove('checked-pop');
         void row.offsetWidth;
@@ -1759,17 +1766,20 @@ function openInlineAdd(wrap, si){
 /* Render Seen */
 function renderSeen(){
   const list = [];
-  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section', rating: f.rating || 0, filmObj: f}); }); });
+  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section', rating: f.rating || 0, filmObj: f, seenDate: f.seenDate || 0}); }); });
   // TMDB seen
   for(let i=0;i<localStorage.length;i++){
     const k = localStorage.key(i);
     if(k && k.startsWith('tmdb_')){
       try{
         const v = JSON.parse(localStorage.getItem(k));
-        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_',''), rating: v.rating || 0, tmdbKey: k });
+        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_',''), rating: v.rating || 0, tmdbKey: k, seenDate: v.seenDate || 0 });
       }catch(e){}
     }
   }
+  
+  // Sort by seenDate ascending (oldest first = lowest number)
+  list.sort((a, b) => (a.seenDate || 0) - (b.seenDate || 0));
 
   seenEl.innerHTML = '';
   if(list.length === 0){ seenEl.textContent = '(Aucun film coché)'; return; }
@@ -1786,7 +1796,11 @@ function renderSeen(){
         // find and unmark in filmsData
         for(let si=0; si<filmsData.length; si++){
           const fidx = filmsData[si].films.findIndex(ff=> ff.title===it.title && (ff.year||'')=== (it.year||''));
-          if(fidx !== -1){ filmsData[si].films[fidx].seen = false; break; }
+          if(fidx !== -1){ 
+            filmsData[si].films[fidx].seen = false; 
+            delete filmsData[si].films[fidx].seenDate;
+            break; 
+          }
         }
         saveData();
       }
@@ -1967,9 +1981,9 @@ function displayTMDB(list){
     cb.addEventListener('change', async ()=>{
       if(cb.checked){
         const key = 'tmdb_' + m.id;
-        const obj = { id: m.id, title: m.title || '', poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, release_date: m.release_date || '', source: m._source || '', seen: true, rating: 0 };
+        const obj = { id: m.id, title: m.title || '', poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, release_date: m.release_date || '', source: m._source || '', seen: true, rating: 0, seenDate: Date.now() };
         try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){}
-        fetchDirector(m.id).then(name=>{ if(name){ try{ const cur = JSON.parse(localStorage.getItem(key)||'{}'); cur.director = name; cur.seen = true; cur.rating = cur.rating || 0; localStorage.setItem(key, JSON.stringify(cur)); }catch(e){} updateCounters(); renderSeen(); updateTmdbWatchedUI(); }});
+        fetchDirector(m.id).then(name=>{ if(name){ try{ const cur = JSON.parse(localStorage.getItem(key)||'{}'); cur.director = name; cur.seen = true; cur.rating = cur.rating || 0; cur.seenDate = cur.seenDate || Date.now(); localStorage.setItem(key, JSON.stringify(cur)); }catch(e){} updateCounters(); renderSeen(); updateTmdbWatchedUI(); }});
         updateCounters(); renderSeen(); updateTmdbWatchedUI();
       } else {
         // Option A: remove from localStorage entirely
@@ -2027,7 +2041,7 @@ function updateTmdbWatchedUI(){
       const addBtn = el('button','button','Ajouter à une section'); addBtn.style.marginLeft='6px';
       addBtn.addEventListener('click', ()=>{
         const idx = parseInt(sel.value,10);
-        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, seen: true };
+        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, seen: true, seenDate: v.seenDate || Date.now() };
         filmsData[idx].films.push(newFilm);
         saveData();
         updateCounters();
