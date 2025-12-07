@@ -1656,9 +1656,14 @@ function renderAll(){
     head.appendChild(left); head.appendChild(right);
     wrap.appendChild(head);
 
+    // Create a map from film to index for O(1) lookup
+    const filmToIndex = new Map();
+    sec.films.forEach((film, idx) => filmToIndex.set(film, idx));
+    
     filmsToShow.forEach((f, localIndex) => {
       // Find the actual index in the full films array
-      const actualFilmIndex = sec.films.findIndex(film => film === f);
+      const actualFilmIndex = filmToIndex.get(f);
+      if (actualFilmIndex === undefined) return; // Safety check
       
       const row = el('div','film');
       const num = el('div','num', globalIndex);
