@@ -241,7 +241,6 @@ select option{ background: #08101a; color: #eef6ff; }
   <section id="all" class="content" data-tabcontent>
     <div class="row" style="margin-bottom:12px">
       <input id="all-search" type="text" placeholder="Rechercher un film, réalisateur ou section..." style="flex:1;min-width:220px">
-      <button id="all-search-btn" class="button">Rechercher</button>
       <button id="all-reset-btn" class="button">Réinitialiser</button>
     </div>
 
@@ -1657,19 +1656,22 @@ function renderAll(){
     head.appendChild(left); head.appendChild(right);
     wrap.appendChild(head);
 
-    filmsToShow.forEach((f, fi) => {
+    filmsToShow.forEach((f, localIndex) => {
+      // Find the actual index in the full films array
+      const actualFilmIndex = sec.films.findIndex(film => film === f);
+      
       const row = el('div','film');
       const num = el('div','num', globalIndex);
       const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!f.seen;
       cb.style.marginLeft='0';
       cb.addEventListener('change', () => {
-        filmsData[si].films[fi].seen = cb.checked;
+        filmsData[si].films[actualFilmIndex].seen = cb.checked;
         // Add timestamp when marking as seen
         if (cb.checked) {
-          filmsData[si].films[fi].seenDate = Date.now();
+          filmsData[si].films[actualFilmIndex].seenDate = Date.now();
         } else {
           // Remove seenDate when unchecking
-          delete filmsData[si].films[fi].seenDate;
+          delete filmsData[si].films[actualFilmIndex].seenDate;
         }
         saveData();
         row.classList.remove('checked-pop');
@@ -1682,7 +1684,7 @@ function renderAll(){
 
       const poster = el('img'); poster.style.width='64px';
       if(f.poster){ poster.src = f.poster; } else poster.style.display='none';
-      if(!f.poster && f.title){ fetchPosterForStatic(f.title, f.year).then(url=>{ if(url){ filmsData[si].films[fi].poster = url; saveData(); renderAll(); } }).catch(()=>{}); }
+      if(!f.poster && f.title){ fetchPosterForStatic(f.title, f.year).then(url=>{ if(url){ filmsData[si].films[actualFilmIndex].poster = url; saveData(); renderAll(); } }).catch(()=>{}); }
 
       const txt = el('div');
       const title = el('div','title', f.title + (f.year? ' ('+f.year+')':'' ));
@@ -1692,9 +1694,9 @@ function renderAll(){
       const actions = el('div','actions');
       if(f.wiki){ const a = el('a','wiki-link','Wiki'); a.href = f.wiki; a.target='_blank'; actions.appendChild(a); }
       const editBtn = el('button','action-btn','✏️'); editBtn.title='Modifier';
-      editBtn.addEventListener('click', ()=> editFilm(si, fi));
+      editBtn.addEventListener('click', ()=> editFilm(si, actualFilmIndex));
       const delBtn2 = el('button','action-delete','🗑️'); delBtn2.title='Supprimer';
-      delBtn2.addEventListener('click', ()=>{ if(confirm('Supprimer ce film ?')){ filmsData[si].films.splice(fi,1); saveData(); renderAll(); renderManage(); }});
+      delBtn2.addEventListener('click', ()=>{ if(confirm('Supprimer ce film ?')){ filmsData[si].films.splice(actualFilmIndex,1); saveData(); renderAll(); renderManage(); }});
       actions.appendChild(editBtn); actions.appendChild(delBtn2);
 
       row.appendChild(num);
@@ -2144,10 +2146,9 @@ qsa('.tab-btn').forEach(btn => btn.addEventListener('click', ()=>{
   }
 }));
 
-/* All search */
-qs('#all-search-btn').addEventListener('click', ()=>{ allSearchQuery = qs('#all-search').value || ''; renderAll(); });
+/* All search - live search like TMDB */
+qs('#all-search').addEventListener('input', (e)=>{ allSearchQuery = e.target.value || ''; renderAll(); });
 qs('#all-reset-btn').addEventListener('click', ()=>{ allSearchQuery=''; qs('#all-search').value=''; renderAll(); });
-qs('#all-search').addEventListener('keyup', (e)=>{ if(e.key==='Enter'){ allSearchQuery = e.target.value; renderAll(); } });
 
 /* Manage create section */
 qs('#create-section')?.addEventListener('click', ()=>{ const n = addSectionInput.value.trim(); if(!n){ alert('Nom requis'); return; } filmsData.push({ section: n, color: randomColor(), films: [] }); saveData(); renderAll(); renderManage(); populateSectionSelects(); addSectionInput.value=''; });
