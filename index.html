@@ -1665,7 +1665,7 @@ function renderAll(){
       cb.addEventListener('change', () => {
         filmsData[si].films[fi].seen = cb.checked;
         // Add timestamp when marking as seen
-        if(cb.checked){
+        if (cb.checked) {
           filmsData[si].films[fi].seenDate = Date.now();
         } else {
           // Remove seenDate when unchecking
@@ -1979,11 +1979,34 @@ function displayTMDB(list){
     cb.checked = existing;
     cb.style.marginLeft='0';
     cb.addEventListener('change', async ()=>{
-      if(cb.checked){
+      if (cb.checked) {
         const key = 'tmdb_' + m.id;
-        const obj = { id: m.id, title: m.title || '', poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, release_date: m.release_date || '', source: m._source || '', seen: true, rating: 0, seenDate: Date.now() };
+        const obj = { 
+          id: m.id, 
+          title: m.title || '', 
+          poster: m.poster_path ? (TMDB_IMAGE_BASE + 'w300' + m.poster_path) : null, 
+          release_date: m.release_date || '', 
+          source: m._source || '', 
+          seen: true, 
+          rating: 0, 
+          seenDate: Date.now() 
+        };
         try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){}
-        fetchDirector(m.id).then(name=>{ if(name){ try{ const cur = JSON.parse(localStorage.getItem(key)||'{}'); cur.director = name; cur.seen = true; cur.rating = cur.rating || 0; cur.seenDate = cur.seenDate || Date.now(); localStorage.setItem(key, JSON.stringify(cur)); }catch(e){} updateCounters(); renderSeen(); updateTmdbWatchedUI(); }});
+        fetchDirector(m.id).then(name=>{
+          if(name){
+            try{
+              const cur = JSON.parse(localStorage.getItem(key)||'{}');
+              cur.director = name;
+              cur.seen = true;
+              cur.rating = cur.rating || 0;
+              cur.seenDate = cur.seenDate || Date.now();
+              localStorage.setItem(key, JSON.stringify(cur));
+            }catch(e){}
+            updateCounters();
+            renderSeen();
+            updateTmdbWatchedUI();
+          }
+        });
         updateCounters(); renderSeen(); updateTmdbWatchedUI();
       } else {
         // Option A: remove from localStorage entirely
