@@ -347,19 +347,29 @@ function generateWatchseriesUrl(title, tmdbId) {
   return `https://watchseries.bar/movie/${slug}/${tmdbId}`;
 }
 
+/* Generate watchseries.bar search URL as fallback */
+function generateWatchseriesSearchUrl(title, year) {
+  // Create search query with title and optionally year
+  let query = (title || '').trim();
+  if (year) query += ' ' + year;
+  return `https://watchseries.bar/search/${encodeURIComponent(query)}`;
+}
+
 /* Open watchseries.bar for a film */
 async function openWatchseries(title, tmdbId, year) {
   if (tmdbId) {
     const url = generateWatchseriesUrl(title, tmdbId);
     if (url) window.open(url, '_blank');
   } else {
-    // Try to fetch TMDB ID
+    // Try to fetch TMDB ID first
     const details = await fetchTMDBDetailsByTitle(title);
     if (details && details.tmdbId) {
       const url = generateWatchseriesUrl(title, details.tmdbId);
       if (url) window.open(url, '_blank');
     } else {
-      alert('Film non trouvé sur TMDB');
+      // Fallback: open watchseries.bar search with title and year
+      const searchUrl = generateWatchseriesSearchUrl(title, year);
+      window.open(searchUrl, '_blank');
     }
   }
 }
