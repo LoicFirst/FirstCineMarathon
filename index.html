@@ -360,8 +360,8 @@ async function openWatchseries(title, tmdbId, year) {
     const url = generateWatchseriesUrl(title, tmdbId);
     if (url) window.open(url, '_blank');
   } else {
-    // Try to fetch TMDB ID first
-    const details = await fetchTMDBDetailsByTitle(title);
+    // Try to fetch TMDB ID first, passing year for better matching
+    const details = await fetchTMDBDetailsByTitle(title, year);
     if (details && details.tmdbId) {
       const url = generateWatchseriesUrl(title, details.tmdbId);
       if (url) window.open(url, '_blank');
@@ -2353,13 +2353,37 @@ tmdbFetchGenres(); fetchTMDBCombined(currentTmdbSource);
 setInterval(()=>{ const active = document.querySelector('.tab-btn.active')?.dataset?.tab; if(active==='tmdb') fetchTMDBCombined(currentTmdbSource); }, 10*60*1000);
 
 /* ================= Utility: fetch TMDB details by title (director, year, poster, wiki) ================= */
-async function fetchTMDBDetailsByTitle(title){
+async function fetchTMDBDetailsByTitle(title, targetYear){
   if(!title) return null;
   try{
     const q = encodeURIComponent(title);
-    const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
+    // Use TMDB's year parameter if targetYear is provided for more accurate results
+    let url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`;
+    if(targetYear) url += `&year=${targetYear}`;
+    const r = await fetch(url);
     const j = await r.json();
-    if(!j || !j.results || j.results.length === 0) return null;
+    if(!j || !j.results || j.results.length === 0) {
+      // If no results with year filter, try without year
+      if(targetYear) {
+        const r2 = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
+        const j2 = await r2.json();
+        if(!j2 || !j2.results || j2.results.length === 0) return null;
+        // Find the best match by year if possible
+        let movie = j2.results[0];
+        if(targetYear) {
+          const yearMatch = j2.results.find(m => m.release_date && m.release_date.startsWith(targetYear));
+          if(yearMatch) movie = yearMatch;
+        }
+        const year = movie.release_date ? movie.release_date.split('-')[0] : '';
+        const poster = movie.poster_path ? (TMDB_IMAGE_BASE + 'w300' + movie.poster_path) : null;
+        let director = '';
+        try{ director = await fetchDirector(movie.id); }catch(e){}
+        let wiki = await fetchWikipedia(movie.title).catch(()=> null);
+        if(!wiki) wiki = autoWiki(movie.title);
+        return { director, year, poster, wiki, title: movie.title || title, tmdbId: movie.id };
+      }
+      return null;
+    }
     const movie = j.results[0];
     const year = movie.release_date ? movie.release_date.split('-')[0] : '';
     const poster = movie.poster_path ? (TMDB_IMAGE_BASE + 'w300' + movie.poster_path) : null;
