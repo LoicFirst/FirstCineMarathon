@@ -354,55 +354,27 @@ function openWatchseries(title, tmdbId) {
   }
 }
 
-/* Fetch TMDB ID by title (for static films that don't have it) */
-async function fetchTmdbIdByTitle(title, year) {
-  if (!title) return null;
-  try {
-    const q = encodeURIComponent(title + (year ? ' ' + year : ''));
-    const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
-    const j = await r.json();
-    if (j && j.results && j.results[0]) {
-      return j.results[0].id;
-    }
-    // Try without year
-    const q2 = encodeURIComponent(title);
-    const r2 = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q2}&page=1&include_adult=false`);
-    const j2 = await r2.json();
-    if (j2 && j2.results && j2.results[0]) {
-      return j2.results[0].id;
-    }
-  } catch (e) { console.error('fetchTmdbIdByTitle', e); }
-  return null;
+/* Check if click target is an interactive element that should not trigger film redirect */
+function isInteractiveElement(target) {
+  return target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.tagName === 'A' || 
+         target.closest('button') || target.closest('a') || target.closest('input') ||
+         target.classList.contains('star') || target.closest('.star') ||
+         target.classList.contains('star-rating') || target.closest('.star-rating');
 }
 
 /* Make a film row clickable (redirect to watchseries.bar) without interfering with other buttons */
 function makeFilmClickable(row, title, tmdbId, fetchIfMissing = null) {
   if (tmdbId) {
     row.classList.add('clickable');
-    row.style.cursor = 'pointer';
     row.addEventListener('click', (e) => {
-      // Check if click was on an interactive element (checkbox, button, link)
-      const target = e.target;
-      if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.tagName === 'A' || 
-          target.closest('button') || target.closest('a') || target.closest('input') ||
-          target.classList.contains('star') || target.closest('.star') ||
-          target.classList.contains('star-rating') || target.closest('.star-rating')) {
-        return; // Don't redirect, let the original action happen
-      }
+      if (isInteractiveElement(e.target)) return;
       openWatchseries(title, tmdbId);
     });
   } else if (fetchIfMissing) {
     // If no ID but we have a way to fetch it, make it clickable with async fetch
     row.classList.add('clickable');
-    row.style.cursor = 'pointer';
     row.addEventListener('click', async (e) => {
-      const target = e.target;
-      if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.tagName === 'A' || 
-          target.closest('button') || target.closest('a') || target.closest('input') ||
-          target.classList.contains('star') || target.closest('.star') ||
-          target.classList.contains('star-rating') || target.closest('.star-rating')) {
-        return;
-      }
+      if (isInteractiveElement(e.target)) return;
       const id = await fetchIfMissing();
       if (id) {
         openWatchseries(title, id);
@@ -1802,7 +1774,10 @@ function renderAll(){
       row.appendChild(poster); row.appendChild(txt); row.appendChild(actions);
       
       // Make film row clickable to redirect to watchseries.bar
-      makeFilmClickable(row, f.title, f.tmdbId, () => fetchTmdbIdByTitle(f.title, f.year));
+      makeFilmClickable(row, f.title, f.tmdbId, async () => {
+        const details = await fetchTMDBDetailsByTitle(f.title);
+        return details ? details.tmdbId : null;
+      });
       
       wrap.appendChild(row);
       globalIndex++;
@@ -1949,7 +1924,10 @@ function renderSeen(){
     row.appendChild(n); row.appendChild(cb); row.appendChild(img); row.appendChild(info);
     
     // Make film row clickable to redirect to watchseries.bar
-    makeFilmClickable(row, it.title, it.tmdbId, () => fetchTmdbIdByTitle(it.title, it.year));
+    makeFilmClickable(row, it.title, it.tmdbId, async () => {
+      const details = await fetchTMDBDetailsByTitle(it.title);
+      return details ? details.tmdbId : null;
+    });
     
     seenEl.appendChild(row);
   });
