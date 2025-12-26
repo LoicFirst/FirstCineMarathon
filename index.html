@@ -62,8 +62,6 @@ header{display:flex;align-items:center;gap:12px;padding:10px 0}
 /* Film row: very small gap to remove space between num and checkbox */
 .film{display:flex;align-items:center;gap:6px;padding:8px;border-radius:8px;transition:background .12s, transform .12s}
 .film:hover{background:rgba(255,255,255,0.01)}
-.film.clickable{cursor:pointer}
-.film.clickable:hover{background:rgba(255,255,255,0.03)}
 .film img{width:64px;border-radius:6px;flex-shrink:0}
 .poster-mid{width:110px}
 .num{min-width:36px;text-align:right;font-weight:800;color:#ffd;margin-right:0}
@@ -89,6 +87,10 @@ select option{ background: #08101a; color: #eef6ff; }
 
 /* Wiki link */
 .wiki-link{ color:var(--accent-2); background:rgba(255,255,255,0.02); padding:5px 8px; border-radius:6px; text-decoration:none; display:inline-block; }
+
+/* Watch link */
+.watch-link{ color:#ff7eb3; background:rgba(255,126,179,0.1); padding:5px 8px; border-radius:6px; text-decoration:none; display:inline-block; cursor:pointer; }
+.watch-link:hover{ background:rgba(255,126,179,0.2); }
 
 /* Carousel */
 .carousel-wrap{position:relative;overflow:hidden;border-radius:10px;margin-top:12px;height:200px}
@@ -335,53 +337,30 @@ const qsa = s => Array.from(document.querySelectorAll(s));
 /* Generate watchseries.bar URL from title and TMDB ID */
 function generateWatchseriesUrl(title, tmdbId) {
   if (!tmdbId) return null;
-  // Convert title to slug: lowercase, replace spaces with hyphens, remove special characters
   const slug = (title || '')
     .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Remove consecutive hyphens
-    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
   return `https://watchseries.bar/movie/${slug}/${tmdbId}`;
 }
 
 /* Open watchseries.bar for a film */
-function openWatchseries(title, tmdbId) {
-  const url = generateWatchseriesUrl(title, tmdbId);
-  if (url) {
-    window.open(url, '_blank');
-  }
-}
-
-/* Check if click target is an interactive element that should not trigger film redirect */
-function isInteractiveElement(target) {
-  return target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.tagName === 'A' || 
-         target.closest('button') || target.closest('a') || target.closest('input') ||
-         target.classList.contains('star') || target.closest('.star') ||
-         target.classList.contains('star-rating') || target.closest('.star-rating');
-}
-
-/* Make a film row clickable (redirect to watchseries.bar) without interfering with other buttons */
-function makeFilmClickable(row, title, tmdbId, fetchIfMissing = null) {
+async function openWatchseries(title, tmdbId, year) {
   if (tmdbId) {
-    row.classList.add('clickable');
-    row.addEventListener('click', (e) => {
-      if (isInteractiveElement(e.target)) return;
-      openWatchseries(title, tmdbId);
-    });
-  } else if (fetchIfMissing) {
-    // If no ID but we have a way to fetch it, make it clickable with async fetch
-    row.classList.add('clickable');
-    row.addEventListener('click', async (e) => {
-      if (isInteractiveElement(e.target)) return;
-      const id = await fetchIfMissing();
-      if (id) {
-        openWatchseries(title, id);
-      } else {
-        alert('Film non trouvé sur la base de données TMDB');
-      }
-    });
+    const url = generateWatchseriesUrl(title, tmdbId);
+    if (url) window.open(url, '_blank');
+  } else {
+    // Try to fetch TMDB ID
+    const details = await fetchTMDBDetailsByTitle(title);
+    if (details && details.tmdbId) {
+      const url = generateWatchseriesUrl(title, details.tmdbId);
+      if (url) window.open(url, '_blank');
+    } else {
+      alert('Film non trouvé sur TMDB');
+    }
   }
 }
 
@@ -1744,16 +1723,7 @@ function renderAll(){
 
       const poster = el('img'); poster.style.width='64px';
       if(f.poster){ poster.src = f.poster; } else poster.style.display='none';
-      if((!f.poster || !f.tmdbId) && f.title){ 
-        fetchPosterForStatic(f.title, f.year).then(result=>{ 
-          if(result.poster || result.tmdbId){ 
-            if(result.poster) filmsData[si].films[actualFilmIndex].poster = result.poster;
-            if(result.tmdbId) filmsData[si].films[actualFilmIndex].tmdbId = result.tmdbId;
-            saveData(); 
-            renderAll(); 
-          } 
-        }).catch(()=>{}); 
-      }
+      if(!f.poster && f.title){ fetchPosterForStatic(f.title, f.year).then(url=>{ if(url){ filmsData[si].films[actualFilmIndex].poster = url; saveData(); renderAll(); } }).catch(()=>{}); }
 
       const txt = el('div');
       const title = el('div','title', f.title + (f.year? ' ('+f.year+')':'' ));
@@ -1762,6 +1732,10 @@ function renderAll(){
 
       const actions = el('div','actions');
       if(f.wiki){ const a = el('a','wiki-link','Wiki'); a.href = f.wiki; a.target='_blank'; actions.appendChild(a); }
+      // Watch button
+      const watchBtn = el('span','watch-link','▶ Watch'); watchBtn.title='Regarder sur watchseries.bar';
+      watchBtn.addEventListener('click', ()=> openWatchseries(f.title, f.tmdbId, f.year));
+      actions.appendChild(watchBtn);
       const editBtn = el('button','action-btn','✏️'); editBtn.title='Modifier';
       editBtn.addEventListener('click', ()=> editFilm(si, actualFilmIndex));
       const delBtn2 = el('button','action-delete','🗑️'); delBtn2.title='Supprimer';
@@ -1772,13 +1746,6 @@ function renderAll(){
       // Put checkbox immediately after number (no extra gap)
       row.appendChild(cb);
       row.appendChild(poster); row.appendChild(txt); row.appendChild(actions);
-      
-      // Make film row clickable to redirect to watchseries.bar
-      makeFilmClickable(row, f.title, f.tmdbId, async () => {
-        const details = await fetchTMDBDetailsByTitle(f.title);
-        return details ? details.tmdbId : null;
-      });
-      
       wrap.appendChild(row);
       globalIndex++;
     });
@@ -1810,18 +1777,11 @@ function openInlineAdd(wrap, si){
   const w = document.createElement('input'); w.placeholder='Wiki (optionnel)';
   const ok = el('button','button','Ajouter');
   ok.addEventListener('click', async ()=>{
-    const newFilm = { title: t.value.trim(), director: d.value.trim(), year: y.value.trim(), wiki: w.value.trim() || autoWiki(t.value.trim()), poster:null, seen:false, tmdbId: t.dataset.tmdbId || null };
+    const newFilm = { title: t.value.trim(), director: d.value.trim(), year: y.value.trim(), wiki: w.value.trim() || autoWiki(t.value.trim()), poster:null, seen:false };
     if(!newFilm.title){ alert('Titre requis'); return; }
     filmsData[si].films.push(newFilm);
     saveData();
-    if(!newFilm.poster || !newFilm.tmdbId) fetchPosterForStatic(newFilm.title,newFilm.year).then(result=>{ 
-      if(result.poster || result.tmdbId){ 
-        if(result.poster) newFilm.poster = result.poster;
-        if(result.tmdbId) newFilm.tmdbId = result.tmdbId;
-        saveData(); 
-        renderAll(); 
-      } 
-    }).catch(()=>{});
+    if(!newFilm.poster) fetchPosterForStatic(newFilm.title,newFilm.year).then(url=>{ if(url){ newFilm.poster = url; saveData(); renderAll(); } }).catch(()=>{});
     renderAll(); renderManage(); renderSeen();
     form.remove();
   });
@@ -1843,7 +1803,6 @@ function openInlineAdd(wrap, si){
         d.value = details.director || '';
         y.value = details.year || '';
         w.value = details.wiki || (details.title ? autoWiki(details.title) : '');
-        t.dataset.tmdbId = details.tmdbId || '';
       }
     }, 300);
   });
@@ -1852,14 +1811,14 @@ function openInlineAdd(wrap, si){
 /* Render Seen */
 function renderSeen(){
   const list = [];
-  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section', rating: f.rating || 0, filmObj: f, seenDate: f.seenDate || 0, tmdbId: f.tmdbId || null }); }); });
+  filmsData.forEach(sec => { (sec.films||[]).forEach(f=>{ if(f.seen) list.push({ title: f.title, year: f.year, section: sec.section, poster: f.poster, director: f.director, source: 'section', rating: f.rating || 0, filmObj: f, seenDate: f.seenDate || 0}); }); });
   // TMDB seen
   for(let i=0;i<localStorage.length;i++){
     const k = localStorage.key(i);
     if(k && k.startsWith('tmdb_')){
       try{
         const v = JSON.parse(localStorage.getItem(k));
-        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_',''), rating: v.rating || 0, tmdbKey: k, seenDate: v.seenDate || 0, tmdbId: k.replace('tmdb_','') });
+        if(v) list.push({ title: v.title || ('#'+k.replace('tmdb_','')), year: v.release_date ? v.release_date.split('-')[0] : '', section: 'TMDB', poster: v.poster || null, director: v.director || '', source: 'tmdb', id: k.replace('tmdb_',''), rating: v.rating || 0, tmdbKey: k, seenDate: v.seenDate || 0 });
       }catch(e){}
     }
   }
@@ -1922,13 +1881,6 @@ function renderSeen(){
     if(it.director) { const d = el('div','meta', it.director); info.appendChild(d); }
     info.appendChild(titleRow); info.appendChild(s);
     row.appendChild(n); row.appendChild(cb); row.appendChild(img); row.appendChild(info);
-    
-    // Make film row clickable to redirect to watchseries.bar
-    makeFilmClickable(row, it.title, it.tmdbId, async () => {
-      const details = await fetchTMDBDetailsByTitle(it.title);
-      return details ? details.tmdbId : null;
-    });
-    
     seenEl.appendChild(row);
   });
 }
@@ -1961,30 +1913,20 @@ function editFilm(si, fi){
 function autoWiki(title){ if(!title) return ''; let s = title.replace(/[:(),]/g,'').replace(/\s+/g,'_'); return 'https://fr.wikipedia.org/wiki/' + encodeURIComponent(s); }
 function randomColor(){ const letters='456789ABCDEF'; let c='#'; for(let i=0;i<6;i++) c+=letters[Math.floor(Math.random()*letters.length)]; return c; }
 
-/* Poster fetch helper (TMDB search) - also returns TMDB ID */
+/* Poster fetch helper (TMDB search) */
 async function fetchPosterForStatic(title, year){
-  if(!title) return { poster: null, tmdbId: null };
+  if(!title) return null;
   try{
     let q = encodeURIComponent(title + (year? ' '+year : ''));
     let r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
     let j = await r.json();
-    if(j && j.results && j.results[0]) {
-      return { 
-        poster: j.results[0].poster_path ? TMDB_IMAGE_BASE + 'w300' + j.results[0].poster_path : null,
-        tmdbId: j.results[0].id
-      };
-    }
+    if(j && j.results && j.results[0] && j.results[0].poster_path) return TMDB_IMAGE_BASE + 'w300' + j.results[0].poster_path;
     q = encodeURIComponent(title);
     r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
     j = await r.json();
-    if(j && j.results && j.results[0]) {
-      return { 
-        poster: j.results[0].poster_path ? TMDB_IMAGE_BASE + 'w300' + j.results[0].poster_path : null,
-        tmdbId: j.results[0].id
-      };
-    }
+    if(j && j.results && j.results[0] && j.results[0].poster_path) return TMDB_IMAGE_BASE + 'w300' + j.results[0].poster_path;
   }catch(e){}
-  return { poster: null, tmdbId: null };
+  return null;
 }
 
 /* ================= TMDB advanced ================= */
@@ -2124,12 +2066,12 @@ function displayTMDB(list){
     if(m._source){ const badge = el('span','small', ` [${m._source}]`); badge.style.marginLeft='6px'; badge.style.color='#ffd54f'; title.appendChild(badge); }
     const dir = el('div','meta','Réalisateur: …'); fetchDirector(m.id).then(name=>{ if(name) dir.textContent = 'Réalisateur: ' + name; });
     const date = el('div','meta', m.release_date ? `Sortie: ${m.release_date}` : '');
-    txt.appendChild(title); txt.appendChild(dir); txt.appendChild(date);
+    // Watch button for TMDB films
+    const watchBtn = el('span','watch-link','▶ Watch'); watchBtn.title='Regarder sur watchseries.bar';
+    watchBtn.style.marginTop='4px'; watchBtn.style.display='inline-block';
+    watchBtn.addEventListener('click', ()=> openWatchseries(m.title || m.name, m.id, m.release_date ? m.release_date.split('-')[0] : ''));
+    txt.appendChild(title); txt.appendChild(dir); txt.appendChild(date); txt.appendChild(watchBtn);
     row.appendChild(num); row.appendChild(cb); row.appendChild(poster); row.appendChild(txt);
-    
-    // Make film row clickable to redirect to watchseries.bar (TMDB films already have ID)
-    makeFilmClickable(row, m.title || m.name, m.id);
-    
     tmdbAllContainer.appendChild(row);
   }
   updateTmdbWatchedUI();
@@ -2171,7 +2113,7 @@ function updateTmdbWatchedUI(){
       const addBtn = el('button','button','Ajouter à une section'); addBtn.style.marginLeft='6px';
       addBtn.addEventListener('click', ()=>{
         const idx = parseInt(sel.value,10);
-        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, seen: true, seenDate: v.seenDate || Date.now(), tmdbId: id };
+        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, seen: true, seenDate: v.seenDate || Date.now() };
         filmsData[idx].films.push(newFilm);
         saveData();
         updateCounters();
@@ -2183,10 +2125,6 @@ function updateTmdbWatchedUI(){
       row.appendChild(n); row.appendChild(cb); row.appendChild(img); row.appendChild(info);
       addSectionWrap.appendChild(sel); addSectionWrap.appendChild(addBtn);
       row.appendChild(addSectionWrap);
-      
-      // Make film row clickable to redirect to watchseries.bar (TMDB watched films have ID)
-      makeFilmClickable(row, v.title, id);
-      
       container.appendChild(row);
     }catch(e){}
   });
@@ -2276,7 +2214,6 @@ addTitle.addEventListener('input', ()=> {
       addDirector.value = details.director || '';
       addYear.value = details.year || '';
       addTitle.dataset.poster = details.poster || '';
-      addTitle.dataset.tmdbId = details.tmdbId || '';
       addWiki.value = details.wiki || (details.title ? autoWiki(details.title) : '');
     }
   }, 300); // 300ms debounce -> very reactive, close to "every letter"
@@ -2290,7 +2227,6 @@ addTitle.addEventListener('blur', async ()=> {
     addDirector.value = details.director || '';
     addYear.value = details.year || '';
     addTitle.dataset.poster = details.poster || '';
-    addTitle.dataset.tmdbId = details.tmdbId || '';
     addWiki.value = details.wiki || (details.title ? autoWiki(details.title) : '');
   }
 });
@@ -2298,29 +2234,22 @@ addTitle.addEventListener('blur', async ()=> {
 addFilmBtn.addEventListener('click', async ()=>{
   const title = addTitle.value.trim(); if(!title){ alert('Titre requis'); return; }
   let director = addDirector.value.trim(); let year = addYear.value.trim(); let wiki = addWiki.value.trim();
-  let tmdbId = addTitle.dataset.tmdbId || null;
   const si = parseInt(addSectionSelect.value||0,10);
-  if(!director || !year || !wiki || !tmdbId){
+  if(!director || !year || !wiki){
     const details = await fetchTMDBDetailsByTitle(title);
     if(details){
       if(!director) director = details.director;
       if(!year) year = details.year;
       if(!wiki) wiki = details.wiki;
-      if(!tmdbId) tmdbId = details.tmdbId;
       if(details.poster) addTitle.dataset.poster = addTitle.dataset.poster || details.poster;
     }
   }
   if(!wiki) wiki = autoWiki(title);
-  const film = { title, director, year, wiki, poster: addTitle.dataset.poster || null, seen:false, tmdbId: tmdbId || null };
+  const film = { title, director, year, wiki, poster: addTitle.dataset.poster || null, seen:false };
   filmsData[si].films.push(film); saveData();
-  const result = await fetchPosterForStatic(title, year); 
-  if(result.poster || result.tmdbId){ 
-    if(result.poster) film.poster = result.poster;
-    if(result.tmdbId && !film.tmdbId) film.tmdbId = result.tmdbId;
-    saveData(); 
-  }
+  const p = await fetchPosterForStatic(title, year); if(p){ film.poster = p; saveData(); }
   renderAll(); renderManage(); renderSeen();
-  addTitle.value=''; addDirector.value=''; addYear.value=''; addWiki.value=''; addTitle.dataset.poster=''; addTitle.dataset.tmdbId='';
+  addTitle.value=''; addDirector.value=''; addYear.value=''; addWiki.value=''; addTitle.dataset.poster='';
 });
 
 /* Additional add buttons - manage-add-btn opens a global inline form */
@@ -2337,10 +2266,10 @@ qs('#manage-add-btn')?.addEventListener('click', ()=> {
   const y=document.createElement('input'); y.placeholder='Année';
   const w=document.createElement('input'); w.placeholder='Wiki (optionnel)';
   let mTimer=null;
-  t.addEventListener('input', ()=>{ clearTimeout(mTimer); mTimer=setTimeout(async ()=>{ const details = await fetchTMDBDetailsByTitle(t.value.trim()); if(details){ d.value = details.director || ''; y.value = details.year || ''; w.value = details.wiki || ''; t.dataset.poster = details.poster || t.dataset.poster; t.dataset.tmdbId = details.tmdbId || t.dataset.tmdbId; } }, 300); });
+  t.addEventListener('input', ()=>{ clearTimeout(mTimer); mTimer=setTimeout(async ()=>{ const details = await fetchTMDBDetailsByTitle(t.value.trim()); if(details){ d.value = details.director || ''; y.value = details.year || ''; w.value = details.wiki || ''; t.dataset.poster = details.poster || t.dataset.poster; } }, 300); });
   const ok = el('button','button','Ajouter'); ok.addEventListener('click', async ()=>{
     const idx = parseInt(sel.value,10);
-    const newFilm={ title:t.value.trim(), director:d.value.trim(), year:y.value.trim(), wiki:w.value.trim() || autoWiki(t.value.trim()), poster:t.dataset.poster||null, seen:false, tmdbId:t.dataset.tmdbId||null };
+    const newFilm={ title:t.value.trim(), director:d.value.trim(), year:y.value.trim(), wiki:w.value.trim() || autoWiki(t.value.trim()), poster:t.dataset.poster||null, seen:false };
     if(!newFilm.title){ alert('Titre requis'); return; }
     filmsData[idx].films.push(newFilm);
     saveData(); renderAll(); renderManage(); renderSeen(); f.remove(); populateSectionSelects();
@@ -2403,7 +2332,7 @@ tmdbFetchGenres(); fetchTMDBCombined(currentTmdbSource);
 /* auto refresh TMDB when active every 10 minutes */
 setInterval(()=>{ const active = document.querySelector('.tab-btn.active')?.dataset?.tab; if(active==='tmdb') fetchTMDBCombined(currentTmdbSource); }, 10*60*1000);
 
-/* ================= Utility: fetch TMDB details by title (director, year, poster, wiki, tmdbId) ================= */
+/* ================= Utility: fetch TMDB details by title (director, year, poster, wiki) ================= */
 async function fetchTMDBDetailsByTitle(title){
   if(!title) return null;
   try{
@@ -2418,7 +2347,7 @@ async function fetchTMDBDetailsByTitle(title){
     try{ director = await fetchDirector(movie.id); }catch(e){}
     let wiki = await fetchWikipedia(movie.title).catch(()=> null);
     if(!wiki) wiki = autoWiki(movie.title);
-    return { director, year, poster, wiki, title: movie.title || title, tmdbId: movie.id };
+    return { director, year, poster, wiki, title: movie.title || title };
   }catch(e){ console.error('fetchTMDBDetailsByTitle', e); return null; }
 }
 
