@@ -88,6 +88,51 @@ select option{ background: #08101a; color: #eef6ff; }
 /* Wiki link */
 .wiki-link{ color:var(--accent-2); background:rgba(255,255,255,0.02); padding:5px 8px; border-radius:6px; text-decoration:none; display:inline-block; }
 
+/* Watch link */
+.watch-link{ color:#ff7eb3; background:rgba(255,126,179,0.1); padding:5px 8px; border-radius:6px; text-decoration:none; display:inline-block; cursor:pointer; }
+.watch-link:hover{ background:rgba(255,126,179,0.2); }
+
+/* Manage Section - Redesigned */
+.manage-header{margin-bottom:20px}
+.manage-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.manage-stats{display:flex;gap:16px;font-size:14px;color:var(--muted)}
+.manage-stats .stat{background:rgba(255,255,255,0.03);padding:6px 12px;border-radius:8px;display:flex;align-items:center;gap:6px}
+.manage-stats .stat-value{font-weight:700;color:var(--accent)}
+.manage-actions-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.manage-create-section{display:flex;gap:8px;flex:1;min-width:250px}
+.manage-create-section input{flex:1;min-width:150px}
+.manage-sections-grid{display:grid;gap:12px}
+.manage-section-card{background:linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));border-radius:12px;border:1px solid rgba(255,255,255,0.04);overflow:hidden;transition:all .2s}
+.manage-section-card:hover{border-color:rgba(255,255,255,0.08);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.manage-section-card.expanded{border-color:var(--accent);box-shadow:0 12px 32px rgba(78,168,255,0.15)}
+.manage-card-header{display:flex;align-items:center;padding:14px 16px;cursor:pointer;gap:12px}
+.manage-card-header:hover{background:rgba(255,255,255,0.02)}
+.manage-card-icon{font-size:20px;width:32px;text-align:center}
+.manage-card-info{flex:1}
+.manage-card-title{font-weight:700;font-size:15px;margin-bottom:2px}
+.manage-card-meta{font-size:12px;color:var(--muted);display:flex;gap:12px}
+.manage-card-meta span{display:flex;align-items:center;gap:4px}
+.manage-card-actions{display:flex;gap:6px}
+.manage-card-btn{background:rgba(255,255,255,0.05);border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;transition:all .15s}
+.manage-card-btn:hover{background:rgba(255,255,255,0.1);transform:translateY(-1px)}
+.manage-card-btn.danger{background:rgba(255,107,107,0.15);color:var(--danger)}
+.manage-card-btn.danger:hover{background:rgba(255,107,107,0.25)}
+.manage-card-expand{background:none;border:none;color:var(--muted);padding:8px;cursor:pointer;transition:transform .2s}
+.manage-card-expand.expanded{transform:rotate(180deg)}
+.manage-card-films{max-height:0;overflow:hidden;transition:max-height .3s ease;background:rgba(0,0,0,0.15)}
+.manage-card-films.expanded{max-height:500px;overflow-y:auto}
+.manage-film-item{display:flex;align-items:center;padding:10px 16px;gap:10px;border-top:1px solid rgba(255,255,255,0.03)}
+.manage-film-item:hover{background:rgba(255,255,255,0.02)}
+.manage-film-poster{width:36px;height:54px;border-radius:4px;object-fit:cover;background:#1a2230}
+.manage-film-info{flex:1;min-width:0}
+.manage-film-title{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.manage-film-meta{font-size:11px;color:var(--muted)}
+.manage-film-actions{display:flex;gap:4px}
+.manage-film-btn{background:none;border:none;color:var(--muted);padding:4px 6px;cursor:pointer;border-radius:4px;font-size:12px}
+.manage-film-btn:hover{background:rgba(255,255,255,0.05);color:#fff}
+.manage-empty{text-align:center;padding:40px;color:var(--muted)}
+.manage-empty-icon{font-size:48px;margin-bottom:12px;opacity:0.5}
+
 /* Carousel */
 .carousel-wrap{position:relative;overflow:hidden;border-radius:10px;margin-top:12px;height:200px}
 .carousel-bg{position:absolute;inset:0;filter:blur(16px) saturate(80%);opacity:0.12;background-size:cover;background-position:center;z-index:0}
@@ -273,13 +318,20 @@ select option{ background: #08101a; color: #eef6ff; }
 
   <!-- MANAGE -->
   <section id="manage" class="content" style="display:none" data-tabcontent>
-    <h3>Sections & gestion</h3>
-    <div class="add-form" style="align-items:center;margin-bottom:8px">
-      <input id="new-section" type="text" placeholder="Nom de la section">
-      <button id="create-section" class="button">Créer</button>
-      <button id="manage-add-btn" class="button">Ajouter un film</button>
+    <div class="manage-header">
+      <div class="manage-title-row">
+        <h3 style="margin:0">📁 Gestion des sections</h3>
+        <div class="manage-stats" id="manage-stats"></div>
+      </div>
+      <div class="manage-actions-row">
+        <div class="manage-create-section">
+          <input id="new-section" type="text" placeholder="Nouvelle section...">
+          <button id="create-section" class="button">➕ Créer</button>
+        </div>
+        <button id="manage-add-btn" class="button" style="background:#6bd3ff">🎬 Ajouter un film</button>
+      </div>
     </div>
-    <div id="manage-list" style="margin-top:12px" class="small"></div>
+    <div id="manage-list" class="manage-sections-grid"></div>
   </section>
 
   <!-- TMDB -->
@@ -329,6 +381,45 @@ const STORAGE_KEY = 'marathon_cine_v2';
 const el = (t, c, txt) => { const e=document.createElement(t); if(c) e.className=c; if(typeof txt!=='undefined') e.textContent=txt; return e; };
 const qs = s => document.querySelector(s);
 const qsa = s => Array.from(document.querySelectorAll(s));
+
+/* Generate watchseries.bar URL from title and TMDB ID */
+function generateWatchseriesUrl(title, tmdbId) {
+  if (!tmdbId) return null;
+  const slug = (title || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `https://watchseries.bar/movie/${slug}/${tmdbId}`;
+}
+
+/* Generate watchseries.bar search URL as fallback */
+function generateWatchseriesSearchUrl(title) {
+  // Create search query with title only (year doesn't work in watchseries search)
+  const query = (title || '').trim();
+  return `https://watchseries.bar/search/${encodeURIComponent(query)}`
+}
+
+/* Open watchseries.bar for a film */
+async function openWatchseries(title, tmdbId, year) {
+  if (tmdbId) {
+    const url = generateWatchseriesUrl(title, tmdbId);
+    if (url) window.open(url, '_blank');
+  } else {
+    // Try to fetch TMDB ID first, passing year for better matching
+    const details = await fetchTMDBDetailsByTitle(title, year);
+    if (details && details.tmdbId) {
+      const url = generateWatchseriesUrl(title, details.tmdbId);
+      if (url) window.open(url, '_blank');
+    } else {
+      // Fallback: open watchseries.bar search with title only
+      const searchUrl = generateWatchseriesSearchUrl(title);
+      window.open(searchUrl, '_blank');
+    }
+  }
+}
 
 /* Star Rating Component */
 function createStarRating(currentRating, onChange){
@@ -1698,6 +1789,10 @@ function renderAll(){
 
       const actions = el('div','actions');
       if(f.wiki){ const a = el('a','wiki-link','Wiki'); a.href = f.wiki; a.target='_blank'; actions.appendChild(a); }
+      // Watch button
+      const watchBtn = el('span','watch-link','▶ Watch'); watchBtn.title='Regarder sur watchseries.bar';
+      watchBtn.addEventListener('click', ()=> openWatchseries(f.title, f.tmdbId, f.year));
+      actions.appendChild(watchBtn);
       const editBtn = el('button','action-btn','✏️'); editBtn.title='Modifier';
       editBtn.addEventListener('click', ()=> editFilm(si, actualFilmIndex));
       const delBtn2 = el('button','action-delete','🗑️'); delBtn2.title='Supprimer';
@@ -1739,11 +1834,18 @@ function openInlineAdd(wrap, si){
   const w = document.createElement('input'); w.placeholder='Wiki (optionnel)';
   const ok = el('button','button','Ajouter');
   ok.addEventListener('click', async ()=>{
-    const newFilm = { title: t.value.trim(), director: d.value.trim(), year: y.value.trim(), wiki: w.value.trim() || autoWiki(t.value.trim()), poster:null, seen:false };
+    const newFilm = { title: t.value.trim(), director: d.value.trim(), year: y.value.trim(), wiki: w.value.trim() || autoWiki(t.value.trim()), poster:null, tmdbId:null, seen:false };
     if(!newFilm.title){ alert('Titre requis'); return; }
     filmsData[si].films.push(newFilm);
     saveData();
-    if(!newFilm.poster) fetchPosterForStatic(newFilm.title,newFilm.year).then(url=>{ if(url){ newFilm.poster = url; saveData(); renderAll(); } }).catch(()=>{});
+    // Fetch poster and TMDB ID
+    fetchTMDBDetailsByTitle(newFilm.title).then(details=>{ 
+      if(details){ 
+        if(details.poster) newFilm.poster = details.poster;
+        if(details.tmdbId) newFilm.tmdbId = details.tmdbId;
+        saveData(); renderAll(); 
+      } 
+    }).catch(()=>{});
     renderAll(); renderManage(); renderSeen();
     form.remove();
   });
@@ -1847,18 +1949,162 @@ function renderSeen(){
   });
 }
 
-/* Render manage */
+/* Render manage - Redesigned */
 function renderManage(){
   manageList.innerHTML = '';
-  filmsData.forEach((s,i) => {
-    const row = el('div',null); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.marginBottom='8px';
-    const left = el('div',null, `${s.section} — ${s.films.length} films`);
-    const right = el('div');
-    const ren = el('button','action-btn','✏️'); ren.style.marginLeft='8px'; ren.addEventListener('click', ()=> { const n = prompt('Nouveau nom', s.section); if(n){ filmsData[i].section = n.trim(); saveData(); renderManage(); renderAll(); }});
-    const rem = el('button','action-delete','🗑️'); rem.style.marginLeft='6px'; rem.addEventListener('click', ()=> { if(confirm('Supprimer la section ?')){ filmsData.splice(i,1); saveData(); renderManage(); renderAll(); populateSectionSelects(); }});
-    right.appendChild(ren); right.appendChild(rem);
-    row.appendChild(left); row.appendChild(right);
-    manageList.appendChild(row);
+  
+  // Update stats
+  const statsEl = qs('#manage-stats');
+  if(statsEl){
+    const totalSections = filmsData.length;
+    const totalFilms = filmsData.reduce((sum, s) => sum + s.films.length, 0);
+    const totalWatched = filmsData.reduce((sum, s) => sum + s.films.filter(f => f.seen).length, 0);
+    statsEl.innerHTML = `
+      <div class="stat">📁 <span class="stat-value">${totalSections}</span> sections</div>
+      <div class="stat">🎬 <span class="stat-value">${totalFilms}</span> films</div>
+      <div class="stat">✅ <span class="stat-value">${totalWatched}</span> vus</div>
+    `;
+  }
+  
+  if(filmsData.length === 0){
+    manageList.innerHTML = `
+      <div class="manage-empty">
+        <div class="manage-empty-icon">📁</div>
+        <div>Aucune section créée</div>
+        <div style="font-size:13px;margin-top:8px">Créez votre première section ci-dessus</div>
+      </div>
+    `;
+    return;
+  }
+  
+  filmsData.forEach((s, i) => {
+    const card = el('div', 'manage-section-card');
+    card.dataset.index = i;
+    
+    const watchedCount = s.films.filter(f => f.seen).length;
+    const icons = ['🎬', '🎭', '🎪', '🎯', '🎨', '🎸', '🎹', '🎺', '🎻', '🎼'];
+    const icon = icons[i % icons.length];
+    
+    // Card header
+    const header = el('div', 'manage-card-header');
+    header.innerHTML = `
+      <div class="manage-card-icon">${icon}</div>
+      <div class="manage-card-info">
+        <div class="manage-card-title">${s.section}</div>
+        <div class="manage-card-meta">
+          <span>🎬 ${s.films.length} films</span>
+          <span>✅ ${watchedCount} vus</span>
+        </div>
+      </div>
+    `;
+    
+    // Actions
+    const actions = el('div', 'manage-card-actions');
+    
+    const renameBtn = el('button', 'manage-card-btn', '✏️ Renommer');
+    renameBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const n = prompt('Nouveau nom de la section:', s.section);
+      if(n && n.trim()){ 
+        filmsData[i].section = n.trim(); 
+        saveData(); 
+        renderManage(); 
+        renderAll(); 
+        populateSectionSelects();
+      }
+    });
+    
+    const deleteBtn = el('button', 'manage-card-btn danger', '🗑️ Supprimer');
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if(confirm(`Supprimer la section "${s.section}" et ses ${s.films.length} films ?`)){ 
+        filmsData.splice(i, 1); 
+        saveData(); 
+        renderManage(); 
+        renderAll(); 
+        populateSectionSelects(); 
+      }
+    });
+    
+    const expandBtn = el('button', 'manage-card-expand', '▼');
+    expandBtn.title = 'Voir les films';
+    
+    actions.appendChild(renameBtn);
+    actions.appendChild(deleteBtn);
+    actions.appendChild(expandBtn);
+    header.appendChild(actions);
+    
+    // Films list (expandable)
+    const filmsList = el('div', 'manage-card-films');
+    
+    if(s.films.length === 0){
+      filmsList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px">Aucun film dans cette section</div>';
+    } else {
+      s.films.forEach((f, fi) => {
+        const filmItem = el('div', 'manage-film-item');
+        
+        const poster = el('img', 'manage-film-poster');
+        poster.src = f.poster || '';
+        poster.alt = f.title;
+        poster.onerror = function(){ this.style.display='none'; };
+        
+        const info = el('div', 'manage-film-info');
+        info.innerHTML = `
+          <div class="manage-film-title">${f.title}${f.year ? ` (${f.year})` : ''}</div>
+          <div class="manage-film-meta">${f.director || 'Réalisateur inconnu'}${f.seen ? ' • ✅ Vu' : ''}</div>
+        `;
+        
+        const filmActions = el('div', 'manage-film-actions');
+        
+        const editBtn = el('button', 'manage-film-btn', '✏️');
+        editBtn.title = 'Modifier';
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          editFilm(i, fi);
+        });
+        
+        const delBtn = el('button', 'manage-film-btn', '🗑️');
+        delBtn.title = 'Supprimer';
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if(confirm(`Supprimer "${f.title}" ?`)){
+            filmsData[i].films.splice(fi, 1);
+            saveData();
+            renderManage();
+            renderAll();
+          }
+        });
+        
+        filmActions.appendChild(editBtn);
+        filmActions.appendChild(delBtn);
+        
+        filmItem.appendChild(poster);
+        filmItem.appendChild(info);
+        filmItem.appendChild(filmActions);
+        filmsList.appendChild(filmItem);
+      });
+    }
+    
+    // Toggle expand
+    header.addEventListener('click', () => {
+      const isExpanded = card.classList.contains('expanded');
+      // Close all others first
+      qsa('.manage-section-card.expanded').forEach(c => {
+        if(c !== card){
+          c.classList.remove('expanded');
+          c.querySelector('.manage-card-films').classList.remove('expanded');
+          c.querySelector('.manage-card-expand').classList.remove('expanded');
+        }
+      });
+      // Toggle this one
+      card.classList.toggle('expanded');
+      filmsList.classList.toggle('expanded');
+      expandBtn.classList.toggle('expanded');
+    });
+    
+    card.appendChild(header);
+    card.appendChild(filmsList);
+    manageList.appendChild(card);
   });
 }
 
@@ -2028,7 +2274,11 @@ function displayTMDB(list){
     if(m._source){ const badge = el('span','small', ` [${m._source}]`); badge.style.marginLeft='6px'; badge.style.color='#ffd54f'; title.appendChild(badge); }
     const dir = el('div','meta','Réalisateur: …'); fetchDirector(m.id).then(name=>{ if(name) dir.textContent = 'Réalisateur: ' + name; });
     const date = el('div','meta', m.release_date ? `Sortie: ${m.release_date}` : '');
-    txt.appendChild(title); txt.appendChild(dir); txt.appendChild(date);
+    // Watch button for TMDB films
+    const watchBtn = el('span','watch-link','▶ Watch'); watchBtn.title='Regarder sur watchseries.bar';
+    watchBtn.style.marginTop='4px'; watchBtn.style.display='inline-block';
+    watchBtn.addEventListener('click', ()=> openWatchseries(m.title || m.name, m.id, m.release_date ? m.release_date.split('-')[0] : ''));
+    txt.appendChild(title); txt.appendChild(dir); txt.appendChild(date); txt.appendChild(watchBtn);
     row.appendChild(num); row.appendChild(cb); row.appendChild(poster); row.appendChild(txt);
     tmdbAllContainer.appendChild(row);
   }
@@ -2071,7 +2321,7 @@ function updateTmdbWatchedUI(){
       const addBtn = el('button','button','Ajouter à une section'); addBtn.style.marginLeft='6px';
       addBtn.addEventListener('click', ()=>{
         const idx = parseInt(sel.value,10);
-        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, seen: true, seenDate: v.seenDate || Date.now() };
+        const newFilm = { title: v.title, director: v.director||'', year: v.release_date ? v.release_date.split('-')[0] : '', wiki: v.wiki || '', poster: v.poster || null, tmdbId: parseInt(id,10) || null, seen: true, seenDate: v.seenDate || Date.now() };
         filmsData[idx].films.push(newFilm);
         saveData();
         updateCounters();
@@ -2172,6 +2422,7 @@ addTitle.addEventListener('input', ()=> {
       addDirector.value = details.director || '';
       addYear.value = details.year || '';
       addTitle.dataset.poster = details.poster || '';
+      addTitle.dataset.tmdbId = details.tmdbId || '';
       addWiki.value = details.wiki || (details.title ? autoWiki(details.title) : '');
     }
   }, 300); // 300ms debounce -> very reactive, close to "every letter"
@@ -2185,6 +2436,7 @@ addTitle.addEventListener('blur', async ()=> {
     addDirector.value = details.director || '';
     addYear.value = details.year || '';
     addTitle.dataset.poster = details.poster || '';
+    addTitle.dataset.tmdbId = details.tmdbId || '';
     addWiki.value = details.wiki || (details.title ? autoWiki(details.title) : '');
   }
 });
@@ -2192,22 +2444,24 @@ addTitle.addEventListener('blur', async ()=> {
 addFilmBtn.addEventListener('click', async ()=>{
   const title = addTitle.value.trim(); if(!title){ alert('Titre requis'); return; }
   let director = addDirector.value.trim(); let year = addYear.value.trim(); let wiki = addWiki.value.trim();
+  let tmdbId = addTitle.dataset.tmdbId ? parseInt(addTitle.dataset.tmdbId,10) : null;
   const si = parseInt(addSectionSelect.value||0,10);
-  if(!director || !year || !wiki){
+  if(!director || !year || !wiki || !tmdbId){
     const details = await fetchTMDBDetailsByTitle(title);
     if(details){
       if(!director) director = details.director;
       if(!year) year = details.year;
       if(!wiki) wiki = details.wiki;
+      if(!tmdbId && details.tmdbId) tmdbId = details.tmdbId;
       if(details.poster) addTitle.dataset.poster = addTitle.dataset.poster || details.poster;
     }
   }
   if(!wiki) wiki = autoWiki(title);
-  const film = { title, director, year, wiki, poster: addTitle.dataset.poster || null, seen:false };
+  const film = { title, director, year, wiki, poster: addTitle.dataset.poster || null, tmdbId: tmdbId || null, seen:false };
   filmsData[si].films.push(film); saveData();
   const p = await fetchPosterForStatic(title, year); if(p){ film.poster = p; saveData(); }
   renderAll(); renderManage(); renderSeen();
-  addTitle.value=''; addDirector.value=''; addYear.value=''; addWiki.value=''; addTitle.dataset.poster='';
+  addTitle.value=''; addDirector.value=''; addYear.value=''; addWiki.value=''; addTitle.dataset.poster=''; addTitle.dataset.tmdbId='';
 });
 
 /* Additional add buttons - manage-add-btn opens a global inline form */
@@ -2224,10 +2478,10 @@ qs('#manage-add-btn')?.addEventListener('click', ()=> {
   const y=document.createElement('input'); y.placeholder='Année';
   const w=document.createElement('input'); w.placeholder='Wiki (optionnel)';
   let mTimer=null;
-  t.addEventListener('input', ()=>{ clearTimeout(mTimer); mTimer=setTimeout(async ()=>{ const details = await fetchTMDBDetailsByTitle(t.value.trim()); if(details){ d.value = details.director || ''; y.value = details.year || ''; w.value = details.wiki || ''; t.dataset.poster = details.poster || t.dataset.poster; } }, 300); });
+  t.addEventListener('input', ()=>{ clearTimeout(mTimer); mTimer=setTimeout(async ()=>{ const details = await fetchTMDBDetailsByTitle(t.value.trim()); if(details){ d.value = details.director || ''; y.value = details.year || ''; w.value = details.wiki || ''; t.dataset.poster = details.poster || t.dataset.poster; t.dataset.tmdbId = details.tmdbId || ''; } }, 300); });
   const ok = el('button','button','Ajouter'); ok.addEventListener('click', async ()=>{
     const idx = parseInt(sel.value,10);
-    const newFilm={ title:t.value.trim(), director:d.value.trim(), year:y.value.trim(), wiki:w.value.trim() || autoWiki(t.value.trim()), poster:t.dataset.poster||null, seen:false };
+    const newFilm={ title:t.value.trim(), director:d.value.trim(), year:y.value.trim(), wiki:w.value.trim() || autoWiki(t.value.trim()), poster:t.dataset.poster||null, tmdbId:t.dataset.tmdbId ? parseInt(t.dataset.tmdbId,10) : null, seen:false };
     if(!newFilm.title){ alert('Titre requis'); return; }
     filmsData[idx].films.push(newFilm);
     saveData(); renderAll(); renderManage(); renderSeen(); f.remove(); populateSectionSelects();
@@ -2291,13 +2545,37 @@ tmdbFetchGenres(); fetchTMDBCombined(currentTmdbSource);
 setInterval(()=>{ const active = document.querySelector('.tab-btn.active')?.dataset?.tab; if(active==='tmdb') fetchTMDBCombined(currentTmdbSource); }, 10*60*1000);
 
 /* ================= Utility: fetch TMDB details by title (director, year, poster, wiki) ================= */
-async function fetchTMDBDetailsByTitle(title){
+async function fetchTMDBDetailsByTitle(title, targetYear){
   if(!title) return null;
   try{
     const q = encodeURIComponent(title);
-    const r = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
+    // Use TMDB's year parameter if targetYear is provided for more accurate results
+    let url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`;
+    if(targetYear) url += `&year=${targetYear}`;
+    const r = await fetch(url);
     const j = await r.json();
-    if(!j || !j.results || j.results.length === 0) return null;
+    if(!j || !j.results || j.results.length === 0) {
+      // If no results with year filter, try without year
+      if(targetYear) {
+        const r2 = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${q}&page=1&include_adult=false`);
+        const j2 = await r2.json();
+        if(!j2 || !j2.results || j2.results.length === 0) return null;
+        // Find the best match by year if possible
+        let movie = j2.results[0];
+        if(targetYear) {
+          const yearMatch = j2.results.find(m => m.release_date && m.release_date.startsWith(targetYear));
+          if(yearMatch) movie = yearMatch;
+        }
+        const year = movie.release_date ? movie.release_date.split('-')[0] : '';
+        const poster = movie.poster_path ? (TMDB_IMAGE_BASE + 'w300' + movie.poster_path) : null;
+        let director = '';
+        try{ director = await fetchDirector(movie.id); }catch(e){}
+        let wiki = await fetchWikipedia(movie.title).catch(()=> null);
+        if(!wiki) wiki = autoWiki(movie.title);
+        return { director, year, poster, wiki, title: movie.title || title, tmdbId: movie.id };
+      }
+      return null;
+    }
     const movie = j.results[0];
     const year = movie.release_date ? movie.release_date.split('-')[0] : '';
     const poster = movie.poster_path ? (TMDB_IMAGE_BASE + 'w300' + movie.poster_path) : null;
@@ -2305,7 +2583,7 @@ async function fetchTMDBDetailsByTitle(title){
     try{ director = await fetchDirector(movie.id); }catch(e){}
     let wiki = await fetchWikipedia(movie.title).catch(()=> null);
     if(!wiki) wiki = autoWiki(movie.title);
-    return { director, year, poster, wiki, title: movie.title || title };
+    return { director, year, poster, wiki, title: movie.title || title, tmdbId: movie.id };
   }catch(e){ console.error('fetchTMDBDetailsByTitle', e); return null; }
 }
 
